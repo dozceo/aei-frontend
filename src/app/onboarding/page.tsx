@@ -1,10 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import type { AppRole } from "@/app/routes";
 import { Badge, Button, Card } from "@/components/design-system";
-import { signInAsRole } from "@/lib/auth-client";
+import { setRoleSession } from "@/lib/auth-client";
 
 const roles = [
   {
@@ -29,11 +29,9 @@ const roles = [
 
 export default function OnboardingPage() {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const deniedPath = searchParams.get("denied");
 
   const handleContinue = (role: AppRole, targetPath: string) => {
-    signInAsRole(role);
+    setRoleSession(role);
     router.push(targetPath);
   };
 
@@ -59,7 +57,6 @@ export default function OnboardingPage() {
           <h1 style={{ margin: "12px 0 10px", fontSize: "clamp(30px, 4.5vw, 58px)", lineHeight: 1.06 }}>
             Choose your <span className="text-gradient">perspective</span> to continue.
           </h1>
-          {deniedPath ? <Badge tone="warning">Access to {deniedPath} requires a different role.</Badge> : null}
           <p className="section-copy" style={{ maxWidth: 740 }}>
             This onboarding page is intentionally original while retaining the AEI visual language. Select a role
             below to open the corresponding planned dashboard flow.

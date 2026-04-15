@@ -2,11 +2,11 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import type { AppRole } from "@/app/routes";
 import { Badge, Button, Card, Input } from "@/components/design-system";
 import { getRoleHome } from "@/lib/auth";
-import { signInAsRole } from "@/lib/auth-client";
+import { signInWithFirebase } from "@/lib/auth-client";
 import { isRoleAllowedForPath, normalizePath } from "@/lib/route-auth";
 
 const roleCards = ["Student", "Teacher", "Parent"];
@@ -36,15 +36,32 @@ function resolveDestination(role: AppRole, nextPath: string | null): string {
 
 export default function LoginPage() {
   const [selectedRole, setSelectedRole] = useState<AppRole>("STUDENT");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const nextPath = searchParams.get("next");
 
-  const handleSignIn = () => {
+  const handleSignIn = async () => {
+    const nextPath = new URLSearchParams(window.location.search).get("next");
+    setErrorMessage(null);
+
+    if (!email.trim() || !password) {
+      setErrorMessage("Enter both email and password to continue.");
+      return;
+    }
+
     setSubmitting(true);
-    signInAsRole(selectedRole);
-    router.push(resolveDestination(selectedRole, nextPath));
+
+    try {
+      const result = await signInWithFirebase(email.trim(), password, selectedRole);
+      router.push(resolveDestination(result.role, nextPath));
+    } catch (error) {
+      const fallbackMessage = "Sign-in failed. Check credentials and Firebase project setup.";
+      setErrorMessage(error instanceof Error && error.message ? error.message : fallbackMessage);
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -138,12 +155,31 @@ export default function LoginPage() {
                     ))}
                   </select>
                 </label>
-                <Input label="Email or Username" name="email" placeholder="name@institution.edu" />
-                <Input label="Password" name="password" type="password" placeholder="Enter your secure password" />
+                <Input
+                  label="Email"
+                  name="email"
+                  type="email"
+                  placeholder="name@institution.edu"
+                  value={email}
+                  onChange={(event) => setEmail(event.target.value)}
+                />
+                <Input
+                  label="Password"
+                  name="password"
+                  type="password"
+                  placeholder="Enter your secure password"
+                  value={password}
+                  onChange={(event) => setPassword(event.target.value)}
+                />
+                {errorMessage ? (
+                  <p style={{ margin: 0, color: "var(--color-danger)", fontSize: "var(--font-size-xs)", fontWeight: 600 }}>
+                    {errorMessage}
+                  </p>
+                ) : null}
                 <Button variant="primary" type="button" fullWidth loading={submitting} onClick={handleSignIn}>
                   Sign In to Dashboard
                 </Button>
-                <Button variant="ghost" type="button" fullWidth onClick={handleSignIn}>
+                <Button variant="ghost" type="button" fullWidth onClick={handleSignIn} loading={submitting}>
                   Continue with SSO
                 </Button>
               </div>
