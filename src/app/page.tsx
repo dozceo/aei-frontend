@@ -17,6 +17,16 @@ const plannedOutputs = [
     description: "Child performance overview, notification inbox, and progress trend summary.",
     href: "/parent/dashboard",
   },
+  {
+    title: "Support & Settings",
+    description: "Profile controls, preference persistence, and ticket-based support workflows.",
+    href: "/settings/profile",
+  },
+  {
+    title: "Billing Checkout",
+    description: "Secure plan selection, discount handling, and payment confirmation flow.",
+    href: "/billing/checkout",
+  },
 ];
 
 export default function HomePage() {
@@ -33,8 +43,14 @@ export default function HomePage() {
           <Link className="nav-link" href="/login">
             Login
           </Link>
+          <Link className="nav-link" href="/auth/signup">
+            Signup
+          </Link>
           <Link className="nav-link" href="/onboarding">
             Onboarding
+          </Link>
+          <Link className="nav-link" href="/help">
+            Help
           </Link>
         </nav>
       </header>

@@ -74,9 +74,12 @@ export default function LoginPage() {
           <Link href="/" className="nav-link">
             Plan Hub
           </Link>
-          <a href="#support" className="nav-link">
-            Support
-          </a>
+          <Link href="/auth/signup" className="nav-link">
+            Signup
+          </Link>
+          <Link href="/help" className="nav-link">
+            Help
+          </Link>
         </nav>
       </header>
 
@@ -172,7 +175,7 @@ export default function LoginPage() {
                   onChange={(event) => setPassword(event.target.value)}
                 />
                 {errorMessage ? (
-                  <p style={{ margin: 0, color: "var(--color-danger)", fontSize: "var(--font-size-xs)", fontWeight: 600 }}>
+                  <p style={{ margin: 0, color: "var(--color-error)", fontSize: "var(--font-size-xs)", fontWeight: 600 }}>
                     {errorMessage}
                   </p>
                 ) : null}
@@ -182,6 +185,18 @@ export default function LoginPage() {
                 <Button variant="ghost" type="button" fullWidth onClick={handleSignIn} loading={submitting}>
                   Continue with SSO
                 </Button>
+                <div className="chip-row" style={{ justifyContent: "space-between" }}>
+                  <Link href="/auth/forgot-password" aria-label="Forgot password">
+                    <Button variant="ghost" type="button" size="sm">
+                      Forgot password
+                    </Button>
+                  </Link>
+                  <Link href="/auth/signup" aria-label="Create account">
+                    <Button variant="secondary" type="button" size="sm">
+                      Create account
+                    </Button>
+                  </Link>
+                </div>
               </div>
             </Card>
 

@@ -24,7 +24,7 @@ export function middleware(request: NextRequest): NextResponse {
   const isAuthenticated = isAuthenticatedValue(authCookieValue);
   const role = normalizeRole(roleCookieValue);
 
-  if (pathname === "/login" && isAuthenticated) {
+  if ((pathname === "/login" || pathname === "/auth/signup" || pathname === "/auth/forgot-password") && isAuthenticated) {
     return redirectTo(request, getRoleHome(role));
   }
 

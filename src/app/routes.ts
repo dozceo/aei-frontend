@@ -9,7 +9,16 @@ export interface AppRoute {
 
 export const appRoutes: AppRoute[] = [
   { path: "/login", label: "Login", requireAuth: false },
+  { path: "/auth/signup", label: "Signup", requireAuth: false },
+  { path: "/auth/forgot-password", label: "Forgot Password", requireAuth: false },
+  { path: "/help", label: "Help", requireAuth: false },
   { path: "/onboarding", label: "Onboarding", requireAuth: true },
+  { path: "/settings/profile", label: "Profile Settings", requireAuth: true },
+  { path: "/settings/preferences", label: "Preference Settings", requireAuth: true },
+  { path: "/support/ticket", label: "Support Tickets", requireAuth: true },
+  { path: "/billing/checkout", label: "Billing Checkout", requireAuth: true },
+  { path: "/billing/success", label: "Billing Success", requireAuth: true },
+  { path: "/billing/failed", label: "Billing Failed", requireAuth: true },
   { path: "/student/dashboard", label: "Student Dashboard", requireAuth: true, roles: ["STUDENT"] },
   { path: "/student/insights", label: "Student Insights", requireAuth: true, roles: ["STUDENT"] },
   { path: "/student/curriculum", label: "Student Curriculum", requireAuth: true, roles: ["STUDENT"] },

@@ -1,57 +1,75 @@
+# Settings for Backend (on Cloud Run).
+# See https://firebase.google.com/docs/app-hosting/configure#cloud-run
 runConfig:
   minInstances: 0
   maxInstances: 3
   cpu: 1
   memoryMiB: 512
 
+# Environment variables and secrets.
 env:
   - variable: NEXT_PUBLIC_FIREBASE_API_KEY
-    secret: NEXT_PUBLIC_FIREBASE_API_KEY
+    value: "AIzaSyDi02bguXjGanHb7vetdFK0XX-rqxA42WI"
     availability:
       - BUILD
       - RUNTIME
   - variable: NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN
-    secret: NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN
+    value: "sankalp-prerollout.firebaseapp.com"
     availability:
       - BUILD
       - RUNTIME
   - variable: NEXT_PUBLIC_FIREBASE_PROJECT_ID
-    secret: NEXT_PUBLIC_FIREBASE_PROJECT_ID
+    value: "sankalp-prerollout"
     availability:
       - BUILD
       - RUNTIME
   - variable: NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET
-    secret: NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET
+    value: "sankalp-prerollout.firebasestorage.app"
     availability:
       - BUILD
       - RUNTIME
   - variable: NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID
-    secret: NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID
+    value: "934191983030"
     availability:
       - BUILD
       - RUNTIME
   - variable: NEXT_PUBLIC_FIREBASE_APP_ID
-    secret: NEXT_PUBLIC_FIREBASE_APP_ID
+    value: "1:934191983030:web:3d7aca5d884bcb03e63917"
+    availability:
+      - BUILD
+      - RUNTIME
+  - variable: NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID
+    value: "G-W3Z2N5348Q"
     availability:
       - BUILD
       - RUNTIME
   - variable: NEXT_PUBLIC_API_BASE_URL
-    secret: NEXT_PUBLIC_API_BASE_URL
+    value: "https://aei-backend--sankalp-prerollout.asia-southeast1.hosted.app"
+    availability:
+      - BUILD
+      - RUNTIME
+  - variable: NEXT_PUBLIC_ML_SERVICE_URL
+    value: "https://ml-training-production-a139.up.railway.app/predict"
+    availability:
+      - BUILD
+      - RUNTIME
+  - variable: NEXT_PUBLIC_ENV
+    value: "development"
     availability:
       - BUILD
       - RUNTIME
   - variable: NEXT_PUBLIC_STUDENT_ID
-    secret: NEXT_PUBLIC_STUDENT_ID
+    value: "default-student"
     availability:
       - BUILD
       - RUNTIME
   - variable: NEXT_PUBLIC_TEACHER_ID
-    secret: NEXT_PUBLIC_TEACHER_ID
+    value: "default-teacher"
     availability:
       - BUILD
       - RUNTIME
   - variable: NEXT_PUBLIC_PARENT_ID
-    secret: NEXT_PUBLIC_PARENT_ID
+    value: "default-parent"
     availability:
       - BUILD
       - RUNTIME

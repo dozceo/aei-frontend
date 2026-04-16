@@ -1,7 +1,7 @@
 "use client";
 
 import type { AppRole } from "@/app/routes";
-import { signInWithEmailAndPassword, signOut } from "firebase/auth";
+import { createUserWithEmailAndPassword, sendPasswordResetEmail, signInWithEmailAndPassword, signOut } from "firebase/auth";
 import { AUTH_COOKIE, AUTH_COOKIE_MAX_AGE_SECONDS, ROLE_COOKIE } from "@/lib/auth";
 import { firebaseAuth } from "@/lib/firebase-client";
 
@@ -71,4 +71,27 @@ export async function signOutFromFirebase(): Promise<void> {
 export function clearAuthCookies(): void {
   setCookie(AUTH_COOKIE, "", 0);
   setCookie(ROLE_COOKIE, "", 0);
+}
+
+export async function signUpWithFirebase(email: string, password: string, role: AppRole): Promise<SignInResult> {
+  if (!firebaseAuth) {
+    throw new Error("Firebase auth is not configured. Set NEXT_PUBLIC_FIREBASE_* values.");
+  }
+
+  const credential = await createUserWithEmailAndPassword(firebaseAuth, email, password);
+  setRoleSession(role);
+
+  return {
+    role,
+    uid: credential.user.uid,
+    email: credential.user.email,
+  };
+}
+
+export async function sendResetEmail(email: string): Promise<void> {
+  if (!firebaseAuth) {
+    throw new Error("Firebase auth is not configured. Set NEXT_PUBLIC_FIREBASE_* values.");
+  }
+
+  await sendPasswordResetEmail(firebaseAuth, email);
 }
