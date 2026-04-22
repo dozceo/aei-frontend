@@ -84,8 +84,6 @@ export function AuthSessionSync() {
 
         setCookie(AUTH_COOKIE, "1", AUTH_COOKIE_MAX_AGE_SECONDS);
 
-        const cookieRole = normalizeRole(getCookie(ROLE_COOKIE));
-
         try {
           const tokenResult = await user.getIdTokenResult();
           if (!active) {
@@ -93,18 +91,23 @@ export function AuthSessionSync() {
           }
 
           const claimRole = normalizeClaimRole(tokenResult.claims.role);
+          
+          // Important: Read cookie *after* the await to avoid race conditions
+          // where sign in sets the cookie while we were fetching the token.
+          const cookieRole = normalizeRole(getCookie(ROLE_COOKIE));
           const resolvedRole = claimRole ?? cookieRole;
 
           if (resolvedRole) {
             setCookie(ROLE_COOKIE, resolvedRole, AUTH_COOKIE_MAX_AGE_SECONDS);
-          } else {
+          } else if (getCookie(ROLE_COOKIE)) {
+            // Only clear if neither claim nor cookie has a valid role, 
+            // but the cookie actually exists.
             setCookie(ROLE_COOKIE, "", 0);
           }
         } catch {
+          const cookieRole = normalizeRole(getCookie(ROLE_COOKIE));
           if (cookieRole) {
             setCookie(ROLE_COOKIE, cookieRole, AUTH_COOKIE_MAX_AGE_SECONDS);
-          } else {
-            setCookie(ROLE_COOKIE, "", 0);
           }
         }
       },

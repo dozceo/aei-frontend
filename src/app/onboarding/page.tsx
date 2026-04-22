@@ -53,7 +53,7 @@ export default function OnboardingPage() {
     }
 
     setRoleSession(role);
-    router.push(targetPath);
+    window.location.assign(targetPath);
   };
 
   return (

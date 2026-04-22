@@ -45,7 +45,7 @@ export default function LoginPage() {
     setEmailSubmitting(true);
     try {
       const result = await signInWithFirebase(email, password, selectedRole || undefined);
-      router.push(resolveDestination(result.role, nextPath));
+      window.location.assign(resolveDestination(result.role, nextPath));
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : "Sign-in failed.");
     } finally {
@@ -59,7 +59,7 @@ export default function LoginPage() {
     setGoogleSubmitting(true);
     try {
       const result = await signInWithGoogle(selectedRole || undefined);
-      router.push(resolveDestination(result.role, nextPath));
+      window.location.assign(resolveDestination(result.role, nextPath));
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : "Google sign-in failed.");
     } finally {
