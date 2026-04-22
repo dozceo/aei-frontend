@@ -15,6 +15,7 @@ import {
 import { doc, getDoc } from "firebase/firestore";
 import { AUTH_COOKIE, AUTH_COOKIE_MAX_AGE_SECONDS, ROLE_COOKIE } from "@/lib/auth";
 import { db, firebaseAuth } from "@/lib/firebase-client";
+import { initializeUserData } from "@/lib/user-initialization-db";
 
 function setCookie(name: string, value: string, maxAgeSeconds: number): void {
   const secureAttribute = typeof window !== "undefined" && window.location.protocol === "https:" ? "; Secure" : "";
@@ -190,7 +191,14 @@ export async function ensureCurrentUserSeedData(role: AppRole): Promise<void> {
     throw new Error("No authenticated user found for onboarding. Sign in and try again.");
   }
 
-  await ensureUserSeedData(role);
+  // Ensure Firestore data exists
+  await initializeUserData(firebaseAuth.currentUser.uid, firebaseAuth.currentUser.email, role);
+
+  try {
+    await ensureUserSeedData(role);
+  } catch (apiError) {
+    console.warn("Backend sync skipped:", apiError);
+  }
 }
 
 export async function signInWithFirebase(email: string, password: string, selectedRole?: AppRole): Promise<SignInResult> {
@@ -215,7 +223,15 @@ export async function signInWithFirebase(email: string, password: string, select
       throw new Error("No role is linked to this account. Complete signup or contact support.");
     }
 
-    await ensureUserSeedData(resolvedRole);
+    // Ensure Firestore data exists
+    await initializeUserData(credential.user.uid, credential.user.email, resolvedRole);
+
+    // Call backend for claims/sync
+    try {
+      await ensureUserSeedData(resolvedRole);
+    } catch (apiError) {
+      console.warn("Backend sync skipped:", apiError);
+    }
 
     setRoleSession(resolvedRole);
 
@@ -254,7 +270,15 @@ export async function signInWithGoogle(selectedRole?: AppRole): Promise<SignInRe
       throw new Error("No role is linked to this account. Complete signup or contact support.");
     }
 
-    await ensureUserSeedData(resolvedRole);
+    // Initialize for new users or ensure data exists
+    await initializeUserData(credential.user.uid, credential.user.email, resolvedRole);
+
+    // Call backend for claims/sync
+    try {
+      await ensureUserSeedData(resolvedRole);
+    } catch (apiError) {
+      console.warn("Backend sync skipped:", apiError);
+    }
 
     setRoleSession(resolvedRole);
 
@@ -299,7 +323,15 @@ export async function signUpWithFirebase(email: string, password: string, role: 
   try {
     const credential = await createUserWithEmailAndPassword(firebaseAuth, normalizedEmail, password);
 
-    await ensureUserSeedData(role);
+    // Initialize Firestore data directly from frontend
+    await initializeUserData(credential.user.uid, credential.user.email, role);
+
+    // Call backend for claims/sync
+    try {
+      await ensureUserSeedData(role);
+    } catch (apiError) {
+      console.warn("Backend sync skipped:", apiError);
+    }
 
     setRoleSession(role);
 
