@@ -5,11 +5,10 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import type { AppRole } from "@/app/routes";
 import { Badge, Button, Card, Input } from "@/components/design-system";
+import { useAuthUser } from "@/hooks/useAuthUser";
 import { getRoleHome } from "@/lib/auth";
-import { signInWithFirebase } from "@/lib/auth-client";
+import { signInWithFirebase, signInWithGoogle, signOutFromFirebase } from "@/lib/auth-client";
 import { isRoleAllowedForPath, normalizePath } from "@/lib/route-auth";
-
-const roleCards = ["Student", "Teacher", "Parent"];
 
 const roleOptions: Array<{ role: AppRole; label: string }> = [
   { role: "STUDENT", label: "Student" },
@@ -18,198 +17,150 @@ const roleOptions: Array<{ role: AppRole; label: string }> = [
 ];
 
 function resolveDestination(role: AppRole, nextPath: string | null): string {
-  if (!nextPath) {
-    return getRoleHome(role);
-  }
-
+  if (!nextPath) return getRoleHome(role);
   const normalizedNextPath = normalizePath(nextPath);
-  if (!normalizedNextPath.startsWith("/") || normalizedNextPath === "/login") {
-    return getRoleHome(role);
-  }
-
-  if (!isRoleAllowedForPath(normalizedNextPath, role)) {
-    return getRoleHome(role);
-  }
-
+  if (!normalizedNextPath.startsWith("/") || normalizedNextPath === "/login") return getRoleHome(role);
+  if (!isRoleAllowedForPath(normalizedNextPath, role)) return getRoleHome(role);
   return normalizedNextPath;
 }
 
 export default function LoginPage() {
-  const [selectedRole, setSelectedRole] = useState<AppRole>("STUDENT");
+  const { user } = useAuthUser();
+  const [selectedRole, setSelectedRole] = useState<AppRole | "">("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [submitting, setSubmitting] = useState(false);
+  const [emailSubmitting, setEmailSubmitting] = useState(false);
+  const [googleSubmitting, setGoogleSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const router = useRouter();
 
-  const handleSignIn = async () => {
+  const handleSignIn = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
     const nextPath = new URLSearchParams(window.location.search).get("next");
     setErrorMessage(null);
-
     if (!email.trim() || !password) {
       setErrorMessage("Enter both email and password to continue.");
       return;
     }
-
-    setSubmitting(true);
-
+    setEmailSubmitting(true);
     try {
-      const result = await signInWithFirebase(email.trim(), password, selectedRole);
+      const result = await signInWithFirebase(email, password, selectedRole || undefined);
       router.push(resolveDestination(result.role, nextPath));
     } catch (error) {
-      const fallbackMessage = "Sign-in failed. Check credentials and Firebase project setup.";
-      setErrorMessage(error instanceof Error && error.message ? error.message : fallbackMessage);
+      setErrorMessage(error instanceof Error ? error.message : "Sign-in failed.");
     } finally {
-      setSubmitting(false);
+      setEmailSubmitting(false);
+    }
+  };
+
+  const handleGoogleSignIn = async () => {
+    const nextPath = new URLSearchParams(window.location.search).get("next");
+    setErrorMessage(null);
+    setGoogleSubmitting(true);
+    try {
+      const result = await signInWithGoogle(selectedRole || undefined);
+      router.push(resolveDestination(result.role, nextPath));
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : "Google sign-in failed.");
+    } finally {
+      setGoogleSubmitting(false);
     }
   };
 
   return (
-    <main className="app-shell" style={{ marginTop: 20 }}>
-      <header className="top-nav nm-surface">
-        <div className="brand">
-          SANKALP <span>AEI</span>
-        </div>
-        <nav className="nav-links" aria-label="Login shortcuts">
-          <Link href="/" className="nav-link">
-            Plan Hub
-          </Link>
-          <Link href="/auth/signup" className="nav-link">
-            Signup
-          </Link>
-          <Link href="/help" className="nav-link">
-            Help
-          </Link>
-        </nav>
+    <main className="app-shell min-h-screen flex flex-col items-center justify-center p-4 bg-slate-50">
+      <header className="brand mb-8 text-center">
+        <h1 className="text-4xl font-bold tracking-tight">
+          SANKALP <span className="text-blue-600">AEI</span>
+        </h1>
+        <p className="text-slate-500 mt-2">Cognitive Access Fabric</p>
       </header>
 
-      <section className="dashboard-grid" aria-label="Login and identity access">
-        <Card
-          variant="soft"
-          className="hero-block"
-          style={{
-            display: "grid",
-            gridTemplateColumns: "1.1fr 1fr",
-            gap: "var(--space-lg)",
-          }}
-        >
-          <section
-            style={{
-              borderRadius: "var(--radius-lg)",
-              padding: "var(--space-xl)",
-              minHeight: 520,
-              background:
-                "radial-gradient(circle at 12% 10%, rgba(155,131,248,0.38), transparent 38%), linear-gradient(130deg, #4e1fc8 0%, #6735ea 48%, #7f5af5 100%)",
-              color: "white",
-              boxShadow: "var(--shadow-lg)",
-            }}
-          >
-            <Badge tone="primary">Cognitive Access Fabric</Badge>
-            <h1 style={{ margin: "16px 0 10px", fontSize: "clamp(30px, 4.2vw, 52px)", lineHeight: 1.1 }}>
-              Enter your role-specific intelligence workspace.
-            </h1>
-            <p style={{ opacity: 0.88, maxWidth: 460 }}>
-              Identity-aware routes provide personalized dashboards, intervention controls, and parent insights with one secure login flow.
-            </p>
-            <div className="chip-row" style={{ marginTop: 26 }}>
-              {roleCards.map((role) => (
-                <span
-                  key={role}
-                  style={{
-                    background: "rgba(255,255,255,0.18)",
-                    border: "1px solid rgba(255,255,255,0.24)",
-                    borderRadius: "var(--radius-full)",
-                    padding: "8px 12px",
-                    fontSize: "var(--font-size-xs)",
-                    fontWeight: 700,
-                    letterSpacing: "0.06em",
-                    textTransform: "uppercase",
-                  }}
+      <div className="w-full max-w-md">
+        {user ? (
+          <Card title="Account Active" subtitle={`Signed in as ${user.email}`}>
+            <div className="space-y-4">
+              <Button variant="primary" fullWidth onClick={() => router.push("/")}>
+                Return to Plan Hub
+              </Button>
+              <div className="flex items-center justify-center gap-2 pt-2 border-t text-sm">
+                <span className="text-slate-500">Not you?</span>
+                <button 
+                  onClick={signOutFromFirebase}
+                  className="text-blue-600 font-semibold hover:underline"
                 >
-                  {role}
-                </span>
-              ))}
-            </div>
-          </section>
-
-          <section style={{ display: "grid", gap: "var(--space-md)", alignContent: "start" }}>
-            <Card title="Welcome Back" subtitle="Sign in to continue your planned flow.">
-              <div style={{ display: "grid", gap: 12 }}>
-                <label style={{ display: "grid", gap: 6 }}>
-                  <span style={{ fontSize: "var(--font-size-xs)", color: "var(--color-text-secondary)", fontWeight: 700 }}>
-                    Role
-                  </span>
-                  <select
-                    value={selectedRole}
-                    onChange={(event) => setSelectedRole(event.target.value as AppRole)}
-                    style={{
-                      width: "100%",
-                      borderRadius: "var(--radius-md)",
-                      border: "1px solid var(--color-border)",
-                      padding: "10px 12px",
-                      background: "var(--color-surface-elevated)",
-                      color: "var(--color-text-primary)",
-                    }}
-                  >
-                    {roleOptions.map((option) => (
-                      <option key={option.role} value={option.role}>
-                        {option.label}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-                <Input
-                  label="Email"
-                  name="email"
-                  type="email"
-                  placeholder="name@institution.edu"
-                  value={email}
-                  onChange={(event) => setEmail(event.target.value)}
-                />
-                <Input
-                  label="Password"
-                  name="password"
-                  type="password"
-                  placeholder="Enter your secure password"
-                  value={password}
-                  onChange={(event) => setPassword(event.target.value)}
-                />
-                {errorMessage ? (
-                  <p style={{ margin: 0, color: "var(--color-error)", fontSize: "var(--font-size-xs)", fontWeight: 600 }}>
-                    {errorMessage}
-                  </p>
-                ) : null}
-                <Button variant="primary" type="button" fullWidth loading={submitting} onClick={handleSignIn}>
-                  Sign In to Dashboard
-                </Button>
-                <Button variant="ghost" type="button" fullWidth onClick={handleSignIn} loading={submitting}>
-                  Continue with SSO
-                </Button>
-                <div className="chip-row" style={{ justifyContent: "space-between" }}>
-                  <Link href="/auth/forgot-password" aria-label="Forgot password">
-                    <Button variant="ghost" type="button" size="sm">
-                      Forgot password
-                    </Button>
-                  </Link>
-                  <Link href="/auth/signup" aria-label="Create account">
-                    <Button variant="secondary" type="button" size="sm">
-                      Create account
-                    </Button>
-                  </Link>
-                </div>
+                  Sign Out
+                </button>
               </div>
-            </Card>
+            </div>
+          </Card>
+        ) : (
+          <Card title="Welcome Back" subtitle="Please sign in to your intelligence workspace.">
+            <form className="space-y-5" onSubmit={handleSignIn}>
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold uppercase tracking-wider text-slate-500">Role Selection</label>
+                <select
+                  value={selectedRole}
+                  onChange={(e) => setSelectedRole(e.target.value as AppRole | "")}
+                  className="w-full p-2.5 rounded-lg border border-slate-200 bg-white text-sm focus:ring-2 focus:ring-blue-500/20"
+                >
+                  <option value="">Auto-detect from profile</option>
+                  {roleOptions.map((opt) => (
+                    <option key={opt.role} value={opt.role}>{opt.label}</option>
+                  ))}
+                </select>
+                <p className="text-[11px] text-slate-400 italic">Select only for your first Google sign-in.</p>
+              </div>
 
-            <Card title="Need first-time setup?" subtitle="Begin with role selection and profile configuration.">
-              <Link href="/onboarding" aria-label="Go to onboarding">
-                <Button variant="secondary" type="button" fullWidth>
-                  Open Onboarding
+              <Input
+                label="Institution Email"
+                type="email"
+                placeholder="name@institution.edu"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+              />
+
+              <Input
+                label="Password"
+                type="password"
+                placeholder="••••••••"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+              />
+
+              {errorMessage && (
+                <div className="p-3 rounded-md bg-red-50 text-red-600 text-xs font-medium border border-red-100">
+                  {errorMessage}
+                </div>
+              )}
+
+              <div className="space-y-3 pt-2">
+                <Button variant="primary" type="submit" fullWidth loading={emailSubmitting} disabled={googleSubmitting}>
+                  Sign In
                 </Button>
-              </Link>
-            </Card>
-          </section>
-        </Card>
-      </section>
+                <Button variant="ghost" type="button" fullWidth onClick={handleGoogleSignIn} loading={googleSubmitting} disabled={emailSubmitting}>
+                  <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" className="w-4 h-4 mr-2 inline" alt="" />
+                  Continue with Google
+                </Button>
+              </div>
+
+              <div className="flex justify-between items-center pt-4 text-sm font-medium">
+                <Link href="/auth/forgot-password" size="sm" className="text-slate-500 hover:text-slate-800 transition-colors">
+                  Forgot Password?
+                </Link>
+                <Link href="/auth/signup" className="text-blue-600 hover:text-blue-700 transition-colors">
+                  Create Account
+                </Link>
+              </div>
+            </form>
+          </Card>
+        )}
+        
+        <div className="mt-8 text-center space-x-6 text-sm font-medium text-slate-400">
+          <Link href="/" className="hover:text-slate-600">Plan Hub</Link>
+          <Link href="/help" className="hover:text-slate-600">Help Center</Link>
+        </div>
+      </div>
     </main>
   );
 }

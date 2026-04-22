@@ -41,7 +41,7 @@ function sanitizeInput(value: string, maxLength: number): string {
 
 export default function BillingCheckoutPage() {
   const router = useRouter();
-  const { user, loading: authLoading, error: authError } = useAuthUser();
+  const { user } = useAuthUser();
 
   const [plans, setPlans] = useState<BillingPlan[]>([]);
   const [selectedPlanId, setSelectedPlanId] = useState<BillingPlanId>("starter");

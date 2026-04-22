@@ -20,7 +20,7 @@ function sanitizePhone(value: string): string {
 }
 
 export default function ProfileSettingsPage() {
-  const { user, loading: authLoading, error: authError } = useAuthUser();
+  const { user } = useAuthUser();
 
   const [form, setForm] = useState<UserProfileSettings>(getProfileDefaults());
   const [loading, setLoading] = useState(true);

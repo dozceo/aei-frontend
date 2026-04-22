@@ -1,10 +1,12 @@
 "use client";
 
 import Link from "next/link";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import type { AppRole } from "@/app/routes";
 import { Badge, Button, Card } from "@/components/design-system";
-import { setRoleSession } from "@/lib/auth-client";
+import { useAuthUser } from "@/hooks/useAuthUser";
+import { ensureCurrentUserSeedData, setRoleSession } from "@/lib/auth-client";
 
 const roles = [
   {
@@ -28,9 +30,28 @@ const roles = [
 ];
 
 export default function OnboardingPage() {
+  const [submittingRole, setSubmittingRole] = useState<AppRole | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const { user } = useAuthUser();
   const router = useRouter();
 
-  const handleContinue = (role: AppRole, targetPath: string) => {
+  const handleContinue = async (role: AppRole, targetPath: string) => {
+    if (!user) {
+      setErrorMessage("Sign in first to complete onboarding.");
+      return;
+    }
+
+    setErrorMessage(null);
+    setSubmittingRole(role);
+
+    try {
+      await ensureCurrentUserSeedData(role);
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : "Unable to prepare account data. Try again.");
+      setSubmittingRole(null);
+      return;
+    }
+
     setRoleSession(role);
     router.push(targetPath);
   };
@@ -61,6 +82,16 @@ export default function OnboardingPage() {
             This onboarding page is intentionally original while retaining the AEI visual language. Select a role
             below to open the corresponding planned dashboard flow.
           </p>
+          {authError ? (
+            <p style={{ margin: "8px 0 0", color: "var(--color-error)", fontWeight: 600, fontSize: "var(--font-size-xs)" }}>
+              {authError}
+            </p>
+          ) : null}
+          {errorMessage ? (
+            <p style={{ margin: "8px 0 0", color: "var(--color-error)", fontWeight: 600, fontSize: "var(--font-size-xs)" }}>
+              {errorMessage}
+            </p>
+          ) : null}
         </Card>
 
         <div className="card-grid-2" style={{ gridColumn: "span 12" }}>
@@ -68,7 +99,13 @@ export default function OnboardingPage() {
             <Card key={role.name} variant={index === 0 ? "soft" : "surface"} title={role.name} subtitle={role.details}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                 <Badge tone={index === 0 ? "primary" : "neutral"}>{index === 0 ? "Recommended" : "Role"}</Badge>
-                <Button variant={index === 0 ? "primary" : "secondary"} size="sm" onClick={() => handleContinue(role.role, role.target)}>
+                <Button
+                  variant={index === 0 ? "primary" : "secondary"}
+                  size="sm"
+                  onClick={() => handleContinue(role.role, role.target)}
+                  loading={submittingRole === role.role}
+                  disabled={authLoading || submittingRole !== null}
+                >
                   Continue
                 </Button>
               </div>

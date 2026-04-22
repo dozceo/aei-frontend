@@ -20,7 +20,7 @@ const prefNav = [
 ];
 
 export default function PreferenceSettingsPage() {
-  const { user, loading: authLoading, error: authError } = useAuthUser();
+  const { user } = useAuthUser();
 
   const [form, setForm] = useState<UserPreferenceSettings>(getPreferenceDefaults());
   const [loading, setLoading] = useState(true);

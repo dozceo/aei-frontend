@@ -5,12 +5,13 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import type { AppRole } from "@/app/routes";
 import { Badge, Button, Card, Input } from "@/components/design-system";
-import { signUpWithFirebase } from "@/lib/auth-client";
+import { useAuthUser } from "@/hooks/useAuthUser";
+import { signUpWithFirebase, signInWithGoogle, signOutFromFirebase } from "@/lib/auth-client";
 
 const roleOptions: Array<{ role: AppRole; label: string; note: string }> = [
-  { role: "STUDENT", label: "Student", note: "Adaptive missions and mastery tracking" },
-  { role: "TEACHER", label: "Teacher", note: "Intervention command and class intelligence" },
-  { role: "PARENT", label: "Parent", note: "Progress monitoring and parent notifications" },
+  { role: "STUDENT", label: "Student", note: "Adaptive missions and tracking" },
+  { role: "TEACHER", label: "Teacher", note: "Class intelligence and commands" },
+  { role: "PARENT", label: "Parent", note: "Progress and notifications" },
 ];
 
 const roleDestination: Record<AppRole, string> = {
@@ -20,12 +21,14 @@ const roleDestination: Record<AppRole, string> = {
 };
 
 export default function SignupPage() {
+  const { user } = useAuthUser();
   const [selectedRole, setSelectedRole] = useState<AppRole>("STUDENT");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [acceptPolicy, setAcceptPolicy] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [googleSubmitting, setGoogleSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const router = useRouter();
@@ -34,148 +37,166 @@ export default function SignupPage() {
 
   const handleSignup = async () => {
     setError(null);
-    setSuccess(null);
-
     if (!canSubmit) {
-      setError("Complete all fields, use a minimum 8-character password, and accept policy terms.");
+      setError("Complete all fields and accept policy terms.");
       return;
     }
-
     if (password !== confirmPassword) {
-      setError("Password and confirmation do not match.");
+      setError("Passwords do not match.");
       return;
     }
-
     setSubmitting(true);
-
     try {
       await signUpWithFirebase(email.trim(), password, selectedRole);
-      setSuccess("Account created successfully. Redirecting to your dashboard...");
+      setSuccess("Redirecting to dashboard...");
       router.push(roleDestination[selectedRole]);
     } catch (nextError) {
-      setError(nextError instanceof Error ? nextError.message : "Signup failed. Try again.");
+      setError(nextError instanceof Error ? nextError.message : "Signup failed.");
     } finally {
       setSubmitting(false);
     }
   };
 
+  const handleGoogleSignup = async () => {
+    setError(null);
+    if (!acceptPolicy) {
+      setError("Please accept policy terms first.");
+      return;
+    }
+    setGoogleSubmitting(true);
+    try {
+      await signInWithGoogle(selectedRole);
+      setSuccess("Redirecting to dashboard...");
+      router.push(roleDestination[selectedRole]);
+    } catch (nextError) {
+      setError(nextError instanceof Error ? nextError.message : "Google signup failed.");
+    } finally {
+      setGoogleSubmitting(false);
+    }
+  };
+
   return (
-    <main className="app-shell" style={{ marginTop: 18 }}>
-      <header className="top-nav nm-surface reveal-up">
-        <div className="brand">
-          SANKALP <span>AEI</span>
-        </div>
-        <nav className="nav-links" aria-label="Signup navigation">
-          <Link href="/" className="nav-link">
-            Plan Hub
-          </Link>
-          <Link href="/login" className="nav-link">
-            Login
-          </Link>
-          <Link href="/help" className="nav-link">
-            Help
-          </Link>
-        </nav>
+    <main className="app-shell min-h-screen flex flex-col items-center justify-center p-4 bg-slate-50">
+      <header className="brand mb-8 text-center">
+        <h1 className="text-4xl font-bold tracking-tight">
+          SANKALP <span className="text-blue-600">AEI</span>
+        </h1>
+        <p className="text-slate-500 mt-2">Create Intelligence Account</p>
       </header>
 
-      <section className="dashboard-grid" aria-label="Signup form">
-        <Card
-          className="hero-block reveal-up reveal-delay-1"
-          variant="soft"
-          title="Create your Sankalp account"
-          subtitle="Role-aware registration with secure Firebase authentication"
-        >
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-            <Input
-              label="Email"
-              type="email"
-              name="email"
-              value={email}
-              onChange={(event) => setEmail(event.target.value)}
-              placeholder="name@institution.edu"
-            />
-            <label style={{ display: "grid", gap: 6 }}>
-              <span style={{ fontSize: "var(--font-size-xs)", fontWeight: 700, color: "var(--color-text-secondary)" }}>Role</span>
-              <select
-                value={selectedRole}
-                onChange={(event) => setSelectedRole(event.target.value as AppRole)}
-                style={{
-                  width: "100%",
-                  borderRadius: "var(--radius-md)",
-                  border: "1px solid var(--color-border)",
-                  padding: "10px 12px",
-                  background: "var(--color-surface-elevated)",
-                  color: "var(--color-text-primary)",
-                }}
-              >
-                {roleOptions.map((option) => (
-                  <option key={option.role} value={option.role}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <Input
-              label="Password"
-              type="password"
-              name="password"
-              value={password}
-              onChange={(event) => setPassword(event.target.value)}
-              placeholder="Minimum 8 characters"
-            />
-            <Input
-              label="Confirm password"
-              type="password"
-              name="confirm-password"
-              value={confirmPassword}
-              onChange={(event) => setConfirmPassword(event.target.value)}
-              placeholder="Repeat your password"
-            />
-          </div>
-
-          <div className="chip-row" style={{ marginTop: 14 }}>
-            {roleOptions.map((option) => (
-              <Badge key={option.role} tone={selectedRole === option.role ? "primary" : "neutral"}>
-                {option.label}: {option.note}
-              </Badge>
-            ))}
-          </div>
-
-          <label style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 14 }}>
-            <input
-              type="checkbox"
-              checked={acceptPolicy}
-              onChange={(event) => setAcceptPolicy(event.target.checked)}
-              aria-label="Accept terms"
-            />
-            <span style={{ fontSize: "var(--font-size-sm)", color: "var(--color-text-secondary)" }}>
-              I accept platform Terms and Privacy conditions.
-            </span>
-          </label>
-
-          {error ? (
-            <p style={{ marginTop: 10, marginBottom: 0, color: "var(--color-error)", fontSize: "var(--font-size-xs)", fontWeight: 600 }}>
-              {error}
-            </p>
-          ) : null}
-          {success ? (
-            <p style={{ marginTop: 10, marginBottom: 0, color: "var(--color-success)", fontSize: "var(--font-size-xs)", fontWeight: 600 }}>
-              {success}
-            </p>
-          ) : null}
-
-          <div className="chip-row" style={{ marginTop: 16 }}>
-            <Button type="button" variant="primary" loading={submitting} onClick={handleSignup}>
-              Create Account
-            </Button>
-            <Link href="/auth/forgot-password" aria-label="Forgot password">
-              <Button type="button" variant="ghost">
-                Forgot Password
+      <div className="w-full max-w-lg">
+        {user ? (
+          <Card title="Account Active" subtitle={`Signed in as ${user.email}`}>
+            <div className="space-y-4">
+              <Button variant="primary" fullWidth onClick={() => router.push("/")}>
+                Return to Plan Hub
               </Button>
-            </Link>
-          </div>
-        </Card>
-      </section>
+              <div className="flex items-center justify-center gap-2 pt-2 border-t text-sm">
+                <span className="text-slate-500">Not you?</span>
+                <button 
+                  onClick={signOutFromFirebase}
+                  className="text-blue-600 font-semibold hover:underline"
+                >
+                  Sign Out
+                </button>
+              </div>
+            </div>
+          </Card>
+        ) : (
+          <Card title="Create Account" subtitle="Join the role-aware learning workspace.">
+            <div className="space-y-6">
+              <div className="grid grid-cols-2 gap-4">
+                <Input
+                  label="Email"
+                  type="email"
+                  placeholder="name@institution.edu"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                />
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold uppercase tracking-wider text-slate-500">Role</label>
+                  <select
+                    value={selectedRole}
+                    onChange={(e) => setSelectedRole(e.target.value as AppRole)}
+                    className="w-full p-2.5 rounded-lg border border-slate-200 bg-white text-sm focus:ring-2 focus:ring-blue-500/20"
+                  >
+                    {roleOptions.map((opt) => (
+                      <option key={opt.role} value={opt.role}>{opt.label}</option>
+                    ))}
+                  </select>
+                </div>
+                <Input
+                  label="Password"
+                  type="password"
+                  placeholder="Min. 8 chars"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                />
+                <Input
+                  label="Confirm"
+                  type="password"
+                  placeholder="Repeat password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                />
+              </div>
+
+              <div className="flex flex-wrap gap-2">
+                {roleOptions.map((opt) => (
+                  <Badge key={opt.role} tone={selectedRole === opt.role ? "primary" : "neutral"}>
+                    {opt.label}: {opt.note}
+                  </Badge>
+                ))}
+              </div>
+
+              <label className="flex items-start gap-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={acceptPolicy}
+                  onChange={(e) => setAcceptPolicy(e.target.checked)}
+                  className="mt-1 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                />
+                <span className="text-xs text-slate-500 leading-relaxed">
+                  I accept platform Terms and Privacy conditions including real-time event-driven tracking.
+                </span>
+              </label>
+
+              {error && (
+                <div className="p-3 rounded-md bg-red-50 text-red-600 text-xs font-medium border border-red-100">
+                  {error}
+                </div>
+              )}
+              {success && (
+                <div className="p-3 rounded-md bg-green-50 text-green-600 text-xs font-medium border border-green-100">
+                  {success}
+                </div>
+              )}
+
+              <div className="space-y-3 pt-2 border-t">
+                <Button variant="primary" type="button" fullWidth loading={submitting} disabled={googleSubmitting} onClick={handleSignup}>
+                  Create Account
+                </Button>
+                <Button variant="ghost" type="button" fullWidth onClick={handleGoogleSignup} loading={googleSubmitting} disabled={submitting}>
+                  <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" className="w-4 h-4 mr-2 inline" alt="" />
+                  Sign up with Google
+                </Button>
+              </div>
+
+              <div className="text-center pt-2 text-sm font-medium">
+                <span className="text-slate-500">Already have an account? </span>
+                <Link href="/login" className="text-blue-600 hover:text-blue-700 transition-colors">
+                  Sign In
+                </Link>
+              </div>
+            </div>
+          </Card>
+        )}
+
+        <div className="mt-8 text-center space-x-6 text-sm font-medium text-slate-400">
+          <Link href="/" className="hover:text-slate-600">Plan Hub</Link>
+          <Link href="/help" className="hover:text-slate-600">Help Center</Link>
+        </div>
+      </div>
     </main>
   );
 }
