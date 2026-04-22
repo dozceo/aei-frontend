@@ -1,0 +1,169 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function hasRole(role) {
+      return isSignedIn() && request.auth.token.role == role;
+    }
+
+    function isOwner(actorId) {
+      return isSignedIn() && request.auth.uid == actorId;
+    }
+
+    function isAdmin() {
+      return hasRole('admin');
+    }
+
+    function isTeacher() {
+      return hasRole('teacher');
+    }
+
+    function isParent() {
+      return hasRole('parent');
+    }
+
+    function isStudent() {
+      return hasRole('student');
+    }
+
+    function isTeacherOrAdmin() {
+      return isTeacher() || isAdmin();
+    }
+    // ═══════════════════════════════════════════════════════════════
+    // Core User Collections
+    // ═══════════════════════════════════════════════════════════════
+    match /users/{uid} {
+      allow read, write: if isOwner(uid) || isAdmin();
+      match /{document=**} {
+        allow read, write: if isOwner(uid) || isAdmin();
+      }
+    }
+
+    match /students/{studentId} {
+      allow read, write: if isOwner(studentId) || isTeacherOrAdmin();
+      
+      match /{document=**} {
+        allow read, write: if isOwner(studentId) || isTeacherOrAdmin();
+      }
+    }
+
+    match /teachers/{teacherId} {
+      allow read, write: if isOwner(teacherId) || isAdmin();
+      
+      match /{document=**} {
+        allow read, write: if isOwner(teacherId) || isAdmin();
+      }
+    }
+
+    match /parents/{parentId} {
+      allow read, write: if isOwner(parentId) || isAdmin();
+      
+      match /{document=**} {
+        allow read, write: if isOwner(parentId) || isAdmin();
+      }
+    }
+    match /events/{eventId} {
+      allow create: if isSignedIn() && request.resource.data.actorId == request.auth.uid;
+      allow read: if isTeacherOrAdmin() || (isStudent() && resource.data.actorId == request.auth.uid);
+      allow update, delete: if isAdmin();
+    }
+    match /mastery_states/{docId} {
+      allow read: if isTeacherOrAdmin() || (isStudent() && resource.data.actorId == request.auth.uid);
+      allow write: if isAdmin();
+    }
+    match /revision_urgencies/{docId} {
+      allow read: if isTeacherOrAdmin() || (isStudent() && resource.data.learnerId == request.auth.uid);
+      allow write: if isAdmin();
+    }
+    match /predictions/{predictionId} {
+      allow read: if isTeacherOrAdmin();
+      allow write: if isAdmin();
+    }
+    match /decisions/{decisionId} {
+      allow read: if isTeacherOrAdmin();
+      allow write: if isAdmin();
+    }
+    match /interventions/{interventionId} {
+      allow read: if isTeacherOrAdmin() || (isStudent() && resource.data.learnerId == request.auth.uid);
+      allow create: if isTeacherOrAdmin();
+      allow update: if isTeacherOrAdmin();
+      allow delete: if isAdmin();
+    }
+    match /feedback/{feedbackId} {
+      allow read: if isTeacherOrAdmin();
+      allow create: if isSignedIn();
+      allow update, delete: if isAdmin();
+    }
+    match /knowledge_nodes/{nodeId} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin();
+    }
+
+    match /knowledge_edges/{edgeId} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin();
+    }
+    match /feature_snapshots/{snapshotId} {
+      allow read: if isTeacherOrAdmin();
+      allow write: if isAdmin();
+    }
+    match /memory_records/{recordId} {
+      allow read: if isTeacherOrAdmin() || (isStudent() && resource.data.actorId == request.auth.uid);
+      allow write: if isAdmin();
+    }
+    match /actor_identities/{actorId} {
+      allow read: if isOwner(actorId) || isTeacherOrAdmin();
+      allow write: if isAdmin();
+    }
+    match /upgrade_manifests/{manifestId} {
+      allow read: if isAdmin();
+      allow write: if isAdmin();
+    }
+    match /audit_logs/{logId} {
+      allow read: if isAdmin();
+      allow write: if isAdmin();
+    }
+    match /alerts/{alertId} {
+      allow read: if isTeacherOrAdmin();
+      allow write: if isAdmin();
+    }
+    match /sessions/{sessionId} {
+      allow read: if isTeacherOrAdmin() || (isStudent() && resource.data.actorId == request.auth.uid);
+      allow write: if isAdmin();
+    }
+    match /teacher_observations/{obsId} {
+      allow read: if isTeacherOrAdmin();
+      allow create: if isTeacher();
+      allow update, delete: if isAdmin();
+    }
+    match /generated_artifacts/{artifactId} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin();
+    }
+    match /rag_documents/{docId} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin();
+    }
+    match /decision_logs/{logId} {
+      allow read: if isTeacherOrAdmin();
+      allow write: if isAdmin();
+    }
+    // match /parents/{parentId}/children/{childId} is covered by the recursive match block above
+    match /embedding_cache/{docId} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin();
+    }
+    match /cluster_snapshots/{snapshotId} {
+      allow read: if isTeacherOrAdmin() || (isStudent() && resource.data.learnerId == request.auth.uid);
+      allow write: if isAdmin();
+    }
+    // New collection for LearnerState object
+    match /learner_states/{learnerId} {
+      allow read: if isOwner(learnerId) || isTeacherOrAdmin();
+      allow write: if isAdmin();
+    }
+  }
+}
