@@ -32,7 +32,7 @@ export default function HelpPage() {
         </div>
         <nav className="nav-links" aria-label="Help navigation">
           <Link href="/" className="nav-link">
-            Plan Hub
+            Home
           </Link>
           <Link href="/login" className="nav-link">
             Login

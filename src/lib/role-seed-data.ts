@@ -9,14 +9,14 @@ const teacherNav = [
   { href: "/teacher/dashboard", label: "Dashboard" },
   { href: "/teacher/interventions", label: "Interventions" },
   { href: "/onboarding", label: "Role Setup" },
-  { href: "/", label: "Plan Hub" },
+  { href: "/", label: "Home" },
 ];
 
 const parentNav = [
   { href: "/parent/dashboard", label: "Dashboard" },
   { href: "/parent/inbox", label: "Inbox" },
   { href: "/onboarding", label: "Role Setup" },
-  { href: "/", label: "Plan Hub" },
+  { href: "/", label: "Home" },
 ];
 
 const sharedBrand = "SANKALP AEI";

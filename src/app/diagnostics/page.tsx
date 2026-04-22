@@ -140,7 +140,7 @@ export default function DiagnosticsPage() {
         </div>
         <nav className="nav-links" aria-label="Diagnostics navigation">
           <Link href="/" className="nav-link">
-            Plan Hub
+            Home
           </Link>
           <Link href="/login" className="nav-link">
             Login

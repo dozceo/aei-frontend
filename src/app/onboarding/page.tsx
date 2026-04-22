@@ -64,7 +64,7 @@ export default function OnboardingPage() {
         </div>
         <nav className="nav-links">
           <Link href="/" className="nav-link">
-            Plan Hub
+            Home
           </Link>
           <Link href="/login" className="nav-link">
             Login

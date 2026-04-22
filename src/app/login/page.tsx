@@ -81,7 +81,7 @@ export default function LoginPage() {
           <Card title="Account Active" subtitle={`Signed in as ${user.email}`}>
             <div className="space-y-4">
               <Button variant="primary" fullWidth onClick={() => router.push("/")}>
-                Return to Plan Hub
+                Return to Home
               </Button>
               <div className="flex items-center justify-center gap-2 pt-2 border-t text-sm">
                 <span className="text-slate-500">Not you?</span>
@@ -157,7 +157,7 @@ export default function LoginPage() {
         )}
         
         <div className="mt-8 text-center space-x-6 text-sm font-medium text-slate-400">
-          <Link href="/" className="hover:text-slate-600">Plan Hub</Link>
+          <Link href="/" className="hover:text-slate-600">Home</Link>
           <Link href="/help" className="hover:text-slate-600">Help Center</Link>
         </div>
       </div>

@@ -2,7 +2,7 @@ import Link from "next/link";
 import { Button, Card, Input } from "@/components/design-system";
 
 const quickLinks = [
-  { href: "/", label: "Plan Hub" },
+  { href: "/", label: "Home" },
   { href: "/login", label: "Login" },
   { href: "/onboarding", label: "Onboarding" },
   { href: "/help", label: "Help Center" },

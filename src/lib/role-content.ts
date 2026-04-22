@@ -140,14 +140,14 @@ export const teacherFallbackNav: RoleNavItem[] = [
   { href: "/teacher/dashboard", label: "Dashboard" },
   { href: "/teacher/interventions", label: "Interventions" },
   { href: "/onboarding", label: "Role Setup" },
-  { href: "/", label: "Plan Hub" },
+  { href: "/", label: "Home" },
 ];
 
 export const parentFallbackNav: RoleNavItem[] = [
   { href: "/parent/dashboard", label: "Dashboard" },
   { href: "/parent/inbox", label: "Inbox" },
   { href: "/onboarding", label: "Role Setup" },
-  { href: "/", label: "Plan Hub" },
+  { href: "/", label: "Home" },
 ];
 
 export function getTeacherPagePath(teacherId: string, pageKey: TeacherPageKey): string {

@@ -26,7 +26,7 @@ export default function GlobalErrorPage({ error, reset }: GlobalErrorProps) {
           subtitle="The application hit an unexpected state while rendering this route."
         >
           <p className="section-copy" style={{ marginBottom: 14 }}>
-            You can retry immediately, go back to the Plan Hub, or contact support if this keeps happening.
+            You can retry immediately, go back to the Home, or contact support if this keeps happening.
           </p>
           {isDev ? (
             <pre
@@ -49,7 +49,7 @@ export default function GlobalErrorPage({ error, reset }: GlobalErrorProps) {
             </Button>
             <Link href="/" aria-label="Go to plan hub">
               <Button type="button" variant="secondary">
-                Go to Plan Hub
+                Go to Home
               </Button>
             </Link>
             <Link href="/support/ticket" aria-label="Create support ticket">
