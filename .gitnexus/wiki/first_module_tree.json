@@ -1,0 +1,131 @@
+[
+  {
+    "name": "Authentication & Authorization",
+    "slug": "authentication-authorization",
+    "files": [
+      "src/app/auth/forgot-password/page.tsx",
+      "src/app/auth/signup/page.tsx",
+      "src/app/login/page.tsx",
+      "src/hooks/useAuthUser.ts",
+      "src/lib/auth-client.ts",
+      "src/lib/auth.ts",
+      "src/lib/route-auth.ts",
+      "src/middleware.ts"
+    ]
+  },
+  {
+    "name": "Billing & Payments",
+    "slug": "billing-payments",
+    "files": [
+      "src/app/billing/checkout/page.tsx",
+      "src/app/billing/failed/page.tsx",
+      "src/app/billing/success/page.tsx",
+      "src/lib/billing-api.ts"
+    ]
+  },
+  {
+    "name": "Student Portal",
+    "slug": "student-portal",
+    "files": [
+      "src/app/student/ai-companion/page.tsx",
+      "src/app/student/assessments/page.tsx",
+      "src/app/student/curriculum/page.tsx",
+      "src/app/student/dashboard/page.tsx",
+      "src/app/student/insights/page.tsx",
+      "src/hooks/useStudentPageContent.ts",
+      "src/lib/seed-student-pages.ts",
+      "src/lib/student-content-db.ts",
+      "src/lib/student-content.ts",
+      "src/lib/student-seed-data.ts"
+    ]
+  },
+  {
+    "name": "Teacher & Parent Portals",
+    "slug": "teacher-parent-portals",
+    "files": [
+      "src/app/parent/dashboard/page.tsx",
+      "src/app/parent/inbox/page.tsx",
+      "src/app/teacher/dashboard/page.tsx",
+      "src/app/teacher/interventions/page.tsx",
+      "src/hooks/useRolePageContent.ts",
+      "src/lib/role-content-db.ts",
+      "src/lib/role-content.ts",
+      "src/lib/role-seed-data.ts",
+      "src/lib/seed-role-pages.ts"
+    ]
+  },
+  {
+    "name": "User Settings & Onboarding",
+    "slug": "user-settings-onboarding",
+    "files": [
+      "src/app/onboarding/page.tsx",
+      "src/app/settings/preferences/page.tsx",
+      "src/app/settings/profile/page.tsx",
+      "src/lib/user-settings-db.ts"
+    ]
+  },
+  {
+    "name": "Support & Help",
+    "slug": "support-help",
+    "files": [
+      "src/app/help/page.tsx",
+      "src/app/support/ticket/page.tsx",
+      "src/lib/support-ticket-db.ts"
+    ]
+  },
+  {
+    "name": "Design System & UI Components",
+    "slug": "design-system-ui-components",
+    "files": [
+      "src/components/design-system/Badge.tsx",
+      "src/components/design-system/Button.tsx",
+      "src/components/design-system/Card.tsx",
+      "src/components/design-system/Input.tsx",
+      "src/components/design-system/Progress.tsx",
+      "src/components/design-system/index.ts",
+      "src/lib/cn.ts",
+      "src/lib/tone-utils.ts",
+      "src/styles/design-system.css"
+    ]
+  },
+  {
+    "name": "Core App & Layout",
+    "slug": "core-app-layout",
+    "files": [
+      "src/app/error.tsx",
+      "src/app/globals.css",
+      "src/app/layout.tsx",
+      "src/app/not-found.tsx",
+      "src/app/page.tsx",
+      "src/app/routes.ts",
+      "src/components/layout/DatabaseState.tsx",
+      "src/components/layout/RoleShell.tsx"
+    ]
+  },
+  {
+    "name": "Backend & Infrastructure",
+    "slug": "backend-infrastructure",
+    "files": [
+      "src/lib/backend-client.ts",
+      "src/lib/firebase-client.ts",
+      "src/lib/mock-data.ts"
+    ]
+  },
+  {
+    "name": "Other",
+    "slug": "other",
+    "files": [
+      "FIREBASE-APP-HOSTING.md",
+      "OUTPUT-EVALUATION-DAY3-4.md",
+      "ROLE-DB-INTEGRATION.md",
+      "STUDENT-DB-INTEGRATION.md",
+      "WEBPAGE-LINKAGE-AND-FEATURES.md",
+      "apphosting.yaml",
+      "firebase.json",
+      "next.config.js",
+      "package.json",
+      "tailwind.config.ts",
+      "tsconfig.json"
+    ]
+  }
+]

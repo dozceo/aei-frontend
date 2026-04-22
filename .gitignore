@@ -46,6 +46,12 @@ coverage/
 .nyc_output/
 .jest_cache/
 
+# Secrets & credentials
+serviceAccountKey.json
+**/serviceAccountKey.json
+*.pem
+*.key
+
 # Misc
 .cache/
 .temp/
