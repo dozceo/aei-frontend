@@ -40,7 +40,7 @@ function formatTimestamp(seconds: number | undefined): string {
 }
 
 export default function SupportTicketPage() {
-  const { user } = useAuthUser();
+  const { user, loading: authLoading, error: authError } = useAuthUser();
 
   const [draft, setDraft] = useState<TicketDraft>(defaultDraft);
   const [tickets, setTickets] = useState<SupportTicket[]>([]);

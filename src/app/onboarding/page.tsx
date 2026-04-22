@@ -32,7 +32,7 @@ const roles = [
 export default function OnboardingPage() {
   const [submittingRole, setSubmittingRole] = useState<AppRole | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const { user } = useAuthUser();
+  const { user, loading: authLoading, error: authError } = useAuthUser();
   const router = useRouter();
 
   const handleContinue = async (role: AppRole, targetPath: string) => {

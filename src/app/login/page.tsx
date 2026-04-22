@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import type { AppRole } from "@/app/routes";
-import { Badge, Button, Card, Input } from "@/components/design-system";
+import { Button, Card, Input } from "@/components/design-system";
 import { useAuthUser } from "@/hooks/useAuthUser";
 import { getRoleHome } from "@/lib/auth";
 import { signInWithFirebase, signInWithGoogle, signOutFromFirebase } from "@/lib/auth-client";
@@ -145,7 +145,7 @@ export default function LoginPage() {
               </div>
 
               <div className="flex justify-between items-center pt-4 text-sm font-medium">
-                <Link href="/auth/forgot-password" size="sm" className="text-slate-500 hover:text-slate-800 transition-colors">
+                <Link href="/auth/forgot-password" className="text-slate-500 hover:text-slate-800 transition-colors">
                   Forgot Password?
                 </Link>
                 <Link href="/auth/signup" className="text-blue-600 hover:text-blue-700 transition-colors">

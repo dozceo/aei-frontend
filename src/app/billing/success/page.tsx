@@ -8,7 +8,7 @@ import { useAuthUser } from "@/hooks/useAuthUser";
 import { getBillingCheckoutSession, type BillingCheckoutSessionSummary } from "@/lib/billing-api";
 
 export default function BillingSuccessPage() {
-  const { user } = useAuthUser();
+  const { user, loading: authLoading, error: authError } = useAuthUser();
 
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [session, setSession] = useState<BillingCheckoutSessionSummary | null>(null);
