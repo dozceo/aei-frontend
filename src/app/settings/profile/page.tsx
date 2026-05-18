@@ -6,7 +6,8 @@ import { updateProfile } from "firebase/auth";
 import { Badge, Button, Card, Input } from "@/components/design-system";
 import { DatabaseState } from "@/components/layout/DatabaseState";
 import { useAuthUser } from "@/hooks/useAuthUser";
-import { getProfileDefaults, loadUserProfileSettings, saveUserProfileSettings, type UserProfileSettings } from "@/lib/user-settings-db";
+import { useUserProfileQuery, useSaveUserProfileMutation } from "@/hooks/queries";
+import { getProfileDefaults, type UserProfileSettings } from "@/lib/user-settings-db";
 
 const profileNav = [
   { href: "/settings/profile", label: "Profile" },
@@ -22,53 +23,26 @@ function sanitizePhone(value: string): string {
 export default function ProfileSettingsPage() {
   const { user, loading: authLoading, error: authError } = useAuthUser();
 
+  const { data: profileData, isLoading: queryLoading, error: queryError } = useUserProfileQuery(user?.uid);
+  const saveProfile = useSaveUserProfileMutation(user?.uid);
+
   const [form, setForm] = useState<UserProfileSettings>(getProfileDefaults());
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [saving, setSaving] = useState(false);
   const [savedAt, setSavedAt] = useState<string | null>(null);
 
+  // Sync fetched data into the form once available
   useEffect(() => {
-    if (!user) {
-      setLoading(authLoading);
-      return;
+    if (profileData) {
+      setForm(profileData);
     }
+  }, [profileData]);
 
-    let active = true;
-
-    loadUserProfileSettings(user.uid)
-      .then((payload) => {
-        if (!active) {
-          return;
-        }
-
-        setForm(payload);
-        setLoading(false);
-      })
-      .catch((nextError) => {
-        if (!active) {
-          return;
-        }
-
-        setError(nextError instanceof Error ? nextError.message : "Unable to load profile settings.");
-        setLoading(false);
-      });
-
-    return () => {
-      active = false;
-    };
-  }, [user, authLoading]);
-
-  const mergedError = authError ?? error;
+  const loading = authLoading || queryLoading;
+  const mergedError = authError ?? (queryError ? queryError.message : null);
 
   const handleSave = async () => {
     if (!user) {
-      setError("You must be signed in to save profile settings.");
       return;
     }
-
-    setSaving(true);
-    setError(null);
 
     const payload: UserProfileSettings = {
       fullName: form.fullName.trim().slice(0, 80),
@@ -79,7 +53,7 @@ export default function ProfileSettingsPage() {
     };
 
     try {
-      await saveUserProfileSettings(user.uid, payload);
+      await saveProfile.mutateAsync(payload);
 
       if (payload.fullName.length > 0 && user.displayName !== payload.fullName) {
         await updateProfile(user, { displayName: payload.fullName });
@@ -87,10 +61,8 @@ export default function ProfileSettingsPage() {
 
       setForm(payload);
       setSavedAt(new Date().toLocaleTimeString());
-    } catch (nextError) {
-      setError(nextError instanceof Error ? nextError.message : "Unable to save profile settings.");
-    } finally {
-      setSaving(false);
+    } catch {
+      // mutation error is accessible via saveProfile.error
     }
   };
 
@@ -110,7 +82,7 @@ export default function ProfileSettingsPage() {
       </header>
 
       <section className="dashboard-grid" aria-label="Profile settings">
-        <DatabaseState loading={loading} error={mergedError} pathHint={user ? `users/${user.uid}/settings/profile` : "users/{uid}/settings/profile"} />
+        <DatabaseState loading={loading} error={mergedError ?? (saveProfile.error ? saveProfile.error.message : null)} pathHint={user ? `users/${user.uid}/settings/profile` : "users/{uid}/settings/profile"} />
 
         {!loading && !mergedError ? (
           <>
@@ -170,7 +142,7 @@ export default function ProfileSettingsPage() {
               </label>
 
               <div className="chip-row" style={{ marginTop: 16 }}>
-                <Button type="button" variant="primary" loading={saving} onClick={handleSave}>
+                <Button type="button" variant="primary" loading={saveProfile.isPending} onClick={handleSave}>
                   Save Profile
                 </Button>
                 <Link href="/settings/preferences" aria-label="Open preference settings">

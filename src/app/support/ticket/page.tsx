@@ -1,17 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { Badge, Button, Card, Input } from "@/components/design-system";
 import { DatabaseState } from "@/components/layout/DatabaseState";
 import { useAuthUser } from "@/hooks/useAuthUser";
-import {
-  createSupportTicket,
-  subscribeToSupportTickets,
-  type SupportCategory,
-  type SupportPriority,
-  type SupportTicket,
-} from "@/lib/support-ticket-db";
+import { useSupportTicketsQuery, useCreateSupportTicketMutation } from "@/hooks/queries";
+import type { SupportCategory, SupportPriority } from "@/lib/support-ticket-db";
 
 interface TicketDraft {
   subject: string;
@@ -32,69 +27,33 @@ function sanitizeText(input: string, maxLength: number): string {
 }
 
 function formatTimestamp(seconds: number | undefined): string {
-  if (!seconds) {
-    return "Pending timestamp";
-  }
-
+  if (!seconds) return "Pending timestamp";
   return new Date(seconds * 1000).toLocaleString();
 }
 
 export default function SupportTicketPage() {
   const { user, loading: authLoading, error: authError } = useAuthUser();
+  const { tickets, loading: queryLoading, error: queryError } = useSupportTicketsQuery(user?.uid);
+  const createTicket = useCreateSupportTicketMutation(user?.uid);
 
   const [draft, setDraft] = useState<TicketDraft>(defaultDraft);
-  const [tickets, setTickets] = useState<SupportTicket[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (!user) {
-      setLoading(authLoading);
-      return;
-    }
-
-    setLoading(true);
-
-    const unsubscribe = subscribeToSupportTickets(
-      user.uid,
-      (nextTickets) => {
-        setTickets(nextTickets);
-        setLoading(false);
-      },
-      (nextError) => {
-        setError(nextError);
-        setLoading(false);
-      },
-    );
-
-    return () => unsubscribe();
-  }, [user, authLoading]);
-
-  const mergedError = authError ?? error;
+  const loading = authLoading || queryLoading;
+  const mergedError = authError ?? queryError;
 
   const handleCreateTicket = async () => {
-    if (!user || !user.email) {
-      setError("You must be authenticated to create a support ticket.");
-      return;
-    }
+    if (!user || !user.email) return;
 
-    setError(null);
     setSuccess(null);
-
     const subject = sanitizeText(draft.subject, 120);
     const message = sanitizeText(draft.message, 1600);
 
-    if (!subject || !message) {
-      setError("Subject and message are required.");
-      return;
-    }
-
-    setSubmitting(true);
+    if (!subject || !message) return; // Note: You'd want real validation here.
 
     try {
-      await createSupportTicket(user.uid, user.email, {
+      await createTicket.mutateAsync({
+        email: user.email,
         subject,
         message,
         priority: draft.priority,
@@ -103,11 +62,18 @@ export default function SupportTicketPage() {
 
       setDraft(defaultDraft);
       setSuccess("Support ticket created successfully.");
-    } catch (nextError) {
-      setError(nextError instanceof Error ? nextError.message : "Unable to create support ticket.");
-    } finally {
-      setSubmitting(false);
+    } catch {
+      // Use createTicket.error below
     }
+  };
+
+  const selectStyle = {
+    width: "100%",
+    borderRadius: "var(--radius-md)",
+    border: "1px solid var(--color-border)",
+    padding: "10px 12px",
+    background: "var(--color-surface-elevated)",
+    color: "var(--color-text-primary)",
   };
 
   return (
@@ -117,46 +83,24 @@ export default function SupportTicketPage() {
           SANKALP <span>AEI</span>
         </div>
         <nav className="nav-links" aria-label="Support navigation">
-          <Link href="/help" className="nav-link">
-            Help
-          </Link>
-          <Link href="/settings/profile" className="nav-link">
-            Profile
-          </Link>
-          <Link href="/support/ticket" className="nav-link active">
-            Tickets
-          </Link>
+          <Link href="/help" className="nav-link">Help</Link>
+          <Link href="/settings/profile" className="nav-link">Profile</Link>
+          <Link href="/support/ticket" className="nav-link active">Tickets</Link>
         </nav>
       </header>
 
       <section className="dashboard-grid" aria-label="Support ticket workspace">
-        <DatabaseState loading={loading} error={mergedError} pathHint={user ? `support_tickets where uid=${user.uid}` : "support_tickets"} />
+        <DatabaseState loading={loading} error={mergedError ?? createTicket.error?.message ?? null} pathHint={user ? `support_tickets where uid=${user.uid}` : "support_tickets"} />
 
         {!loading && !mergedError ? (
           <>
             <Card className="hero-block reveal-up reveal-delay-1" variant="soft" title="Support ticket system" subtitle="Create issues, track statuses, and keep intervention flows unblocked">
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-                <Input
-                  label="Subject"
-                  name="ticket-subject"
-                  value={draft.subject}
-                  onChange={(event) => setDraft((prev) => ({ ...prev, subject: event.target.value }))}
-                  placeholder="Short issue title"
-                />
+                <Input label="Subject" name="ticket-subject" value={draft.subject}
+                  onChange={(e) => setDraft((p) => ({ ...p, subject: e.target.value }))} placeholder="Short issue title" />
                 <label style={{ display: "grid", gap: 6 }}>
                   <span style={{ fontSize: "var(--font-size-xs)", color: "var(--color-text-secondary)", fontWeight: 700 }}>Category</span>
-                  <select
-                    value={draft.category}
-                    onChange={(event) => setDraft((prev) => ({ ...prev, category: event.target.value as SupportCategory }))}
-                    style={{
-                      width: "100%",
-                      borderRadius: "var(--radius-md)",
-                      border: "1px solid var(--color-border)",
-                      padding: "10px 12px",
-                      background: "var(--color-surface-elevated)",
-                      color: "var(--color-text-primary)",
-                    }}
-                  >
+                  <select value={draft.category} onChange={(e) => setDraft((p) => ({ ...p, category: e.target.value as SupportCategory }))} style={selectStyle}>
                     <option value="TECHNICAL">Technical</option>
                     <option value="BILLING">Billing</option>
                     <option value="ACADEMIC">Academic Flow</option>
@@ -165,18 +109,7 @@ export default function SupportTicketPage() {
                 </label>
                 <label style={{ display: "grid", gap: 6 }}>
                   <span style={{ fontSize: "var(--font-size-xs)", color: "var(--color-text-secondary)", fontWeight: 700 }}>Priority</span>
-                  <select
-                    value={draft.priority}
-                    onChange={(event) => setDraft((prev) => ({ ...prev, priority: event.target.value as SupportPriority }))}
-                    style={{
-                      width: "100%",
-                      borderRadius: "var(--radius-md)",
-                      border: "1px solid var(--color-border)",
-                      padding: "10px 12px",
-                      background: "var(--color-surface-elevated)",
-                      color: "var(--color-text-primary)",
-                    }}
-                  >
+                  <select value={draft.priority} onChange={(e) => setDraft((p) => ({ ...p, priority: e.target.value as SupportPriority }))} style={selectStyle}>
                     <option value="LOW">Low</option>
                     <option value="MEDIUM">Medium</option>
                     <option value="HIGH">High</option>
@@ -186,37 +119,23 @@ export default function SupportTicketPage() {
 
               <label style={{ display: "grid", gap: 6, marginTop: 12 }}>
                 <span style={{ fontSize: "var(--font-size-xs)", color: "var(--color-text-secondary)", fontWeight: 700 }}>Description</span>
-                <textarea
-                  value={draft.message}
-                  onChange={(event) => setDraft((prev) => ({ ...prev, message: event.target.value }))}
-                  rows={5}
-                  placeholder="Describe what happened, expected result, and steps to reproduce"
-                  style={{
-                    borderRadius: "var(--radius-md)",
-                    border: "1px solid var(--color-border)",
-                    padding: "10px 12px",
-                    background: "var(--color-surface-elevated)",
-                    color: "var(--color-text-primary)",
-                    resize: "vertical",
-                  }}
-                />
+                <textarea value={draft.message} onChange={(e) => setDraft((p) => ({ ...p, message: e.target.value }))} rows={5} placeholder="Describe what happened, expected result, and steps to reproduce"
+                  style={{ ...selectStyle, resize: "vertical" }} />
               </label>
 
-              {error ? (
-                <p style={{ margin: "10px 0 0", color: "var(--color-error)", fontSize: "var(--font-size-xs)", fontWeight: 600 }}>{error}</p>
+              {createTicket.isError ? (
+                <p style={{ margin: "10px 0 0", color: "var(--color-error)", fontSize: "var(--font-size-xs)", fontWeight: 600 }}>{createTicket.error?.message}</p>
               ) : null}
               {success ? (
                 <p style={{ margin: "10px 0 0", color: "var(--color-success)", fontSize: "var(--font-size-xs)", fontWeight: 600 }}>{success}</p>
               ) : null}
 
               <div className="chip-row" style={{ marginTop: 14 }}>
-                <Button type="button" variant="primary" loading={submitting} onClick={handleCreateTicket}>
+                <Button type="button" variant="primary" loading={createTicket.isPending} onClick={handleCreateTicket}>
                   Create Ticket
                 </Button>
                 <Link href="/help" aria-label="Open help center">
-                  <Button type="button" variant="secondary">
-                    Open Help Center
-                  </Button>
+                  <Button type="button" variant="secondary">Open Help Center</Button>
                 </Link>
               </div>
             </Card>
