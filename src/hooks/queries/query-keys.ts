@@ -20,4 +20,7 @@ export const queryKeys = {
 
   /* ─── Support Tickets ─── */
   supportTickets: (uid: string) => ["support-tickets", uid] as const,
+
+  participant: (bookingId: string) => ["participant", bookingId] as const,
+  mlPrediction: (learnerId: string) => ["ml-prediction", learnerId] as const,
 } as const;

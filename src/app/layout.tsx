@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter, Manrope } from "next/font/google";
 import { AuthSessionSync } from "@/components/layout/AuthSessionSync";
 import { QueryProvider } from "@/components/providers/QueryProvider";
+import { SchoolProvider } from "@/components/providers/SchoolProvider";
 import "./globals.css";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
@@ -21,7 +22,9 @@ export default function RootLayout({
     <html lang="en">
       <body className={`${inter.variable} ${manrope.variable}`}>
         <AuthSessionSync />
-        <QueryProvider>{children}</QueryProvider>
+        <QueryProvider>
+          <SchoolProvider>{children}</SchoolProvider>
+        </QueryProvider>
       </body>
     </html>
   );

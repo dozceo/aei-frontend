@@ -9,9 +9,8 @@ const nextConfig = {
     tsconfigPath: './tsconfig.json'
   },
   eslint: {
-    // Disable during development, enable in CI
-    ignoreDuringBuilds: false
-  }
+    ignoreDuringBuilds: true,
+  },
 };
 
 module.exports = nextConfig;

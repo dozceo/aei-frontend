@@ -24,5 +24,9 @@ export const isFirebaseConfigured = requiredConfig.every((value) => typeof value
 
 const app = isFirebaseConfigured ? (getApps().length > 0 ? getApp() : initializeApp(firebaseConfig)) : null;
 
-export const db = app ? getFirestore(app) : null;
+const firestoreDatabaseId =
+  process.env.NEXT_PUBLIC_FIRESTORE_DATABASE_ID?.trim() || "zero2dev";
+
+export const db = app ? getFirestore(app, firestoreDatabaseId) : null;
+export const firestoreDatabaseName = firestoreDatabaseId;
 export const firebaseAuth = app ? getAuth(app) : null;

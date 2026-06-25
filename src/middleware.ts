@@ -24,8 +24,9 @@ export function middleware(request: NextRequest): NextResponse {
   const isAuthenticated = isAuthenticatedValue(authCookieValue);
   const role = normalizeRole(roleCookieValue);
 
-  // REMOVED: Aggressive redirect away from auth pages when authenticated.
-  // This allows users to switch accounts or see the signup page even if a session cookie exists.
+  if ((pathname === "/login" || pathname === "/auth/signup" || pathname === "/auth/forgot-password") && isAuthenticated && role) {
+    return redirectTo(request, getRoleHome(role));
+  }
 
   if (!route) {
     return NextResponse.next();

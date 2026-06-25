@@ -16,6 +16,8 @@ import { doc, getDoc } from "firebase/firestore";
 import { AUTH_COOKIE, AUTH_COOKIE_MAX_AGE_SECONDS, ROLE_COOKIE } from "@/lib/auth";
 import { db, firebaseAuth } from "@/lib/firebase-client";
 import { initializeUserData } from "@/lib/user-initialization-db";
+import { provisionSchoolMembership } from "@/lib/school-api";
+import { isAdminEmail } from "@/lib/admins";
 
 function setCookie(name: string, value: string, maxAgeSeconds: number): void {
   const secureAttribute = typeof window !== "undefined" && window.location.protocol === "https:" ? "; Secure" : "";
@@ -28,7 +30,7 @@ function normalizeClaimRole(claimRole: unknown): AppRole | null {
   }
 
   const normalized = claimRole.trim().toUpperCase();
-  if (normalized === "STUDENT" || normalized === "TEACHER" || normalized === "PARENT") {
+  if (normalized === "STUDENT" || normalized === "TEACHER" || normalized === "PARENT" || normalized === "ADMIN") {
     return normalized;
   }
 
@@ -127,6 +129,10 @@ interface ResolveRoleOptions {
 }
 
 async function resolveRoleFromUser(credential: UserCredential, options: ResolveRoleOptions = {}): Promise<AppRole | null> {
+  if (isAdminEmail(credential.user.email)) {
+    return "ADMIN";
+  }
+
   const roleFromClaims = await getRoleFromClaims(credential.user);
   if (roleFromClaims) {
     return roleFromClaims;
@@ -229,6 +235,7 @@ export async function signInWithFirebase(email: string, password: string, select
     // Call backend for claims/sync
     try {
       await ensureUserSeedData(resolvedRole);
+      await provisionSchoolMembership().catch((e) => console.warn("School provision skipped:", e));
     } catch (apiError) {
       console.warn("Backend sync skipped:", apiError);
     }
@@ -276,6 +283,7 @@ export async function signInWithGoogle(selectedRole?: AppRole): Promise<SignInRe
     // Call backend for claims/sync
     try {
       await ensureUserSeedData(resolvedRole);
+      await provisionSchoolMembership().catch((e) => console.warn("School provision skipped:", e));
     } catch (apiError) {
       console.warn("Backend sync skipped:", apiError);
     }

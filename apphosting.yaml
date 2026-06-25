@@ -43,18 +43,23 @@ env:
     availability:
       - BUILD
       - RUNTIME
+  - variable: NEXT_PUBLIC_FIRESTORE_DATABASE_ID
+    value: "zero2dev"
+    availability:
+      - BUILD
+      - RUNTIME
   - variable: NEXT_PUBLIC_API_BASE_URL
     value: "https://aei-backend--sankalp-prerollout.asia-southeast1.hosted.app"
     availability:
       - BUILD
       - RUNTIME
   - variable: NEXT_PUBLIC_ML_SERVICE_URL
-    value: "https://ml-training-production-a139.up.railway.app/predict"
+    value: "https://ml-training-production-a139.up.railway.app"
     availability:
       - BUILD
       - RUNTIME
   - variable: NEXT_PUBLIC_ENV
-    value: "development"
+    value: "production"
     availability:
       - BUILD
       - RUNTIME

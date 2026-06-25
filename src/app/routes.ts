@@ -1,4 +1,4 @@
-export type AppRole = "STUDENT" | "TEACHER" | "PARENT";
+export type AppRole = "STUDENT" | "TEACHER" | "PARENT" | "ADMIN";
 
 export interface AppRoute {
   path: string;
@@ -19,12 +19,19 @@ export const appRoutes: AppRoute[] = [
   { path: "/billing/checkout", label: "Billing Checkout", requireAuth: true },
   { path: "/billing/success", label: "Billing Success", requireAuth: true },
   { path: "/billing/failed", label: "Billing Failed", requireAuth: true },
+  { path: "/admin", label: "Admin Console", requireAuth: true, roles: ["ADMIN"] },
   { path: "/student/dashboard", label: "Student Dashboard", requireAuth: true, roles: ["STUDENT"] },
+  { path: "/student/loop", label: "Sankalp Loop", requireAuth: true, roles: ["STUDENT"] },
+  { path: "/student/mind", label: "Student Mind", requireAuth: true, roles: ["STUDENT"] },
+  { path: "/student/queries", label: "Student Queries", requireAuth: true, roles: ["STUDENT"] },
   { path: "/student/insights", label: "Student Insights", requireAuth: true, roles: ["STUDENT"] },
   { path: "/student/curriculum", label: "Student Curriculum", requireAuth: true, roles: ["STUDENT"] },
   { path: "/student/assessments", label: "Student Assessments", requireAuth: true, roles: ["STUDENT"] },
   { path: "/student/ai-companion", label: "Student AI Companion", requireAuth: true, roles: ["STUDENT"] },
   { path: "/teacher/dashboard", label: "Teacher Dashboard", requireAuth: true, roles: ["TEACHER"] },
+  { path: "/teacher/students", label: "Teacher Students", requireAuth: true, roles: ["TEACHER"] },
+  { path: "/teacher/heatmap", label: "Teacher Heatmap", requireAuth: true, roles: ["TEACHER"] },
+  { path: "/teacher/attendance", label: "Teacher Attendance", requireAuth: true, roles: ["TEACHER"] },
   { path: "/teacher/interventions", label: "Teacher Interventions", requireAuth: true, roles: ["TEACHER"] },
   { path: "/parent/dashboard", label: "Parent Dashboard", requireAuth: true, roles: ["PARENT"] },
   { path: "/parent/inbox", label: "Parent Inbox", requireAuth: true, roles: ["PARENT"] },
@@ -34,4 +41,5 @@ export const routeGroups = {
   student: appRoutes.filter((route) => route.roles?.includes("STUDENT")),
   teacher: appRoutes.filter((route) => route.roles?.includes("TEACHER")),
   parent: appRoutes.filter((route) => route.roles?.includes("PARENT")),
+  admin: appRoutes.filter((route) => route.roles?.includes("ADMIN")),
 };

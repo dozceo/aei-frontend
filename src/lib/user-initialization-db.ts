@@ -58,6 +58,7 @@ export async function initializeUserData(
     STUDENT: "students",
     TEACHER: "teachers",
     PARENT: "parents",
+    ADMIN: "admins",
   };
 
   const roleCollection = roleCollectionMap[role];
@@ -76,12 +77,17 @@ export async function initializeUserData(
     setDoc(roleDocRef, roleDocData, { merge: true }),
   ]);
 
-  // Seed page data for the user's role
-  if (role === "TEACHER") {
-    await seedTeacherPages(uid);
-  } else if (role === "PARENT") {
-    await seedParentPages(uid);
-  } else if (role === "STUDENT") {
-    await seedStudentPages(uid);
+  // Seed page docs only for isolated/default DB — zero2dev uses real participant data.
+  const useLegacySeed =
+    (process.env.NEXT_PUBLIC_FIRESTORE_DATABASE_ID || "zero2dev") !== "zero2dev";
+
+  if (useLegacySeed) {
+    if (role === "TEACHER") {
+      await seedTeacherPages(uid);
+    } else if (role === "PARENT") {
+      await seedParentPages(uid);
+    } else if (role === "STUDENT") {
+      await seedStudentPages(uid);
+    }
   }
 }

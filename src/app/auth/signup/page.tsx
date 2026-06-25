@@ -18,6 +18,7 @@ const roleDestination: Record<AppRole, string> = {
   STUDENT: "/student/dashboard",
   TEACHER: "/teacher/dashboard",
   PARENT: "/parent/dashboard",
+  ADMIN: "/admin",
 };
 
 export default function SignupPage() {

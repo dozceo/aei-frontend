@@ -1,93 +1,54 @@
 "use client";
 
-import { Badge, Button, Card, Progress } from "@/components/design-system";
+import Link from "next/link";
+import { Badge, Button, Card } from "@/components/design-system";
 import { DatabaseState } from "@/components/layout/DatabaseState";
 import { RoleShell } from "@/components/layout/RoleShell";
-import { useStudentPageContent } from "@/hooks/useStudentPageContent";
-import { getStudentPagePath, studentFallbackNav, type StudentDashboardDoc } from "@/lib/student-content";
+import { useParticipant } from "@/hooks/useParticipant";
+import { routeGroups } from "@/app/routes";
 
-const pageKey = "dashboard" as const;
+const studentNav = routeGroups.student.map((r) => ({ label: r.label, href: r.path }));
 
 export default function StudentDashboardPage() {
-  const { data, loading, error, studentId } = useStudentPageContent<StudentDashboardDoc>(pageKey);
-  const pathHint = getStudentPagePath(studentId, pageKey);
-
-  const shellTitle = data?.hero.title ?? "Student dashboard";
-  const shellSubtitle = data?.hero.subtitle ?? "Database-backed student overview";
+  const { participant, loading, error, bookingId, schoolId } = useParticipant();
 
   return (
     <RoleShell
-      title={shellTitle}
-      subtitle={shellSubtitle}
-      eyebrow={data?.hero.eyebrow ?? "Database Content"}
-      navItems={data?.navItems ?? studentFallbackNav}
+      title={participant?.name ?? "Student dashboard"}
+      subtitle={`School: ${schoolId ?? "—"} · Booking ${bookingId || "—"}`}
+      eyebrow="zero2dev"
+      navItems={studentNav}
       activePath="/student/dashboard"
-      actionLabel={data?.hero.actionLabel}
-      actionHref={data?.hero.actionHref}
-      brandLabel={data?.brandLabel ?? "SANKALP AEI"}
+      actionLabel="Start loop"
+      actionHref="/student/loop"
+      brandLabel="SANKALP AEI"
     >
-      {!data ? (
-        <DatabaseState loading={loading} error={error} pathHint={pathHint} />
+      {!participant ? (
+        <DatabaseState loading={loading} error={error} pathHint={`participants/${bookingId}`} />
       ) : (
         <>
-          <Card title={data.mission.title} subtitle={data.mission.subtitle} style={{ gridColumn: "span 8" }}>
-            <div className="chip-row" style={{ marginBottom: 12 }}>
-              {data.mission.badges.map((badge) => (
-                <Badge key={badge} tone="primary">
-                  {badge}
-                </Badge>
-              ))}
-            </div>
+          <Card title="Daily path" subtitle="One primary flow" style={{ gridColumn: "span 6" }}>
             <p className="section-copy" style={{ marginBottom: 16 }}>
-              {data.mission.description}
+              Complete the Sankalp Loop for spaced repetition, brain map updates, and ML insights.
             </p>
-            <Progress
-              label={data.mission.progress.label}
-              value={data.mission.progress.value}
-              hint={data.mission.progress.hint}
-              tone="primary"
-            />
-            <div style={{ display: "flex", gap: 10, marginTop: 16 }}>
-              <Button variant="primary">{data.mission.actions.primary}</Button>
-              <Button variant="secondary">{data.mission.actions.secondary}</Button>
-            </div>
+            <Link href="/student/loop"><Button variant="primary">Open Sankalp Loop</Button></Link>
           </Card>
-
-          <Card title={data.sections.signalsTitle} subtitle={data.sections.signalsSubtitle} style={{ gridColumn: "span 4" }}>
-            <ul className="list-clean">
-              {data.signals.map((signal) => (
-                <li key={signal.title} className="nm-surface-soft" style={{ padding: 12, borderRadius: "var(--radius-sm)" }}>
-                  <strong>{signal.title}</strong>
-                  <p className="section-copy" style={{ marginTop: 4 }}>
-                    {signal.value}
-                  </p>
-                </li>
-              ))}
+          <Card title="Signals" subtitle="Live participant doc" style={{ gridColumn: "span 6" }}>
+            <ul className="list-clean" style={{ display: "grid", gap: 8 }}>
+              <li><strong>Percentile</strong> {participant.percentile ?? "—"}</li>
+              <li><strong>Division</strong> {participant.divisionId ?? participant.classId ?? "—"}</li>
+              <li><strong>Level</strong> {participant.level ?? 1}</li>
             </ul>
-          </Card>
-
-          <Card title={data.sections.masteryTitle} subtitle={data.sections.masterySubtitle} style={{ gridColumn: "span 6" }}>
-            <div style={{ display: "grid", gap: 12 }}>
-              {data.subjectMastery.map((metric) => (
-                <Progress
-                  key={metric.subject}
-                  label={metric.subject}
-                  value={metric.mastery}
-                  tone={metric.mastery >= 80 ? "success" : metric.mastery <= 60 ? "warning" : "primary"}
-                />
-              ))}
+            <div className="flex flex-wrap gap-2 mt-4">
+              <Link href="/student/mind"><Button variant="secondary">Mind</Button></Link>
+              <Link href="/student/insights"><Button variant="ghost">Insights</Button></Link>
             </div>
           </Card>
-
-          <Card title={data.nextSteps.title} subtitle={data.nextSteps.subtitle} style={{ gridColumn: "span 6" }}>
-            <ol style={{ margin: 0, paddingLeft: 20, display: "grid", gap: 10 }}>
-              {data.nextSteps.items.map((item) => (
-                <li key={item}>{item}</li>
-              ))}
-            </ol>
-            <div style={{ marginTop: 18, display: "flex", gap: 10 }}>
-              <Button variant="secondary">{data.nextSteps.actions.primary}</Button>
-              <Button variant="ghost">{data.nextSteps.actions.secondary}</Button>
+          <Card title="Quick actions" style={{ gridColumn: "span 12" }}>
+            <div className="flex flex-wrap gap-2">
+              <Link href="/student/queries"><Button variant="secondary">Ask AI</Button></Link>
+              <Link href="/student/ai-companion"><Button variant="secondary">Companion</Button></Link>
+              <Badge tone="primary">Firestore: zero2dev</Badge>
             </div>
           </Card>
         </>

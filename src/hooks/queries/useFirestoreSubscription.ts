@@ -1,18 +1,10 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useQueryClient, useQuery, type QueryKey } from "@tanstack/react-query";
 
 /**
  * Bridge between Firestore `onSnapshot` subscriptions and React Query cache.
- *
- * Problem: onSnapshot is callback-based (push), React Query is promise-based (pull).
- * Solution: This hook starts the subscription, pushes every snapshot into the
- * React Query cache via `queryClient.setQueryData`, and returns the cached value
- * through `useQuery`.
- *
- * The `subscribeFn` receives two callbacks (onData, onError) and must return an
- * unsubscribe function. This matches the signature of the existing `-db.ts` files.
  */
 export function useFirestoreSubscription<T>(options: {
   queryKey: QueryKey;
@@ -24,18 +16,23 @@ export function useFirestoreSubscription<T>(options: {
 }) {
   const { queryKey, subscribeFn, enabled = true } = options;
   const queryClient = useQueryClient();
+  const [subscriptionError, setSubscriptionError] = useState<string | null>(null);
 
-  // Subscription side-effect — writes data directly into the cache
   useEffect(() => {
-    if (!enabled) return;
+    if (!enabled) {
+      setSubscriptionError(null);
+      return;
+    }
 
     const unsubscribe = subscribeFn(
       (data) => {
+        setSubscriptionError(null);
         queryClient.setQueryData(queryKey, data);
       },
       (error) => {
+        setSubscriptionError(error);
         if (error) {
-          queryClient.setQueryData(queryKey, undefined);
+          queryClient.setQueryData(queryKey, null);
         }
       },
     );
@@ -44,14 +41,19 @@ export function useFirestoreSubscription<T>(options: {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [enabled, ...queryKey]);
 
-  // Read from the cache (never fetches on its own — the subscription feeds it)
-  return useQuery<T | null>({
+  const result = useQuery<T | null>({
     queryKey,
-    queryFn: () => queryClient.getQueryData(queryKey) as T | null ?? null,
+    queryFn: () => (queryClient.getQueryData(queryKey) as T | null) ?? null,
     enabled,
-    staleTime: Infinity,              // subscription keeps it fresh
+    staleTime: Infinity,
     refetchOnMount: false,
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
   });
+
+  return {
+    ...result,
+    error: subscriptionError ? new Error(subscriptionError) : result.error,
+    isError: Boolean(subscriptionError) || result.isError,
+  };
 }

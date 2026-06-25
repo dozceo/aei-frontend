@@ -1,90 +1,57 @@
 "use client";
 
-import { Badge, Button, Card } from "@/components/design-system";
-import { DatabaseState } from "@/components/layout/DatabaseState";
+import { useState } from "react";
+import { Button, Card } from "@/components/design-system";
 import { RoleShell } from "@/components/layout/RoleShell";
-import { useStudentPageContent } from "@/hooks/useStudentPageContent";
-import { getStudentPagePath, studentFallbackNav, type StudentAiCompanionDoc } from "@/lib/student-content";
+import { routeGroups } from "@/app/routes";
+import { backendPost } from "@/lib/backend-client";
 
-const pageKey = "ai-companion" as const;
+const studentNav = routeGroups.student.map((r) => ({ label: r.label, href: r.path }));
 
 export default function StudentAiCompanionPage() {
-  const { data, loading, error, studentId } = useStudentPageContent<StudentAiCompanionDoc>(pageKey);
-  const pathHint = getStudentPagePath(studentId, pageKey);
+  const [prompt, setPrompt] = useState("");
+  const [messages, setMessages] = useState<Array<{ role: string; content: string }>>([]);
+  const [loading, setLoading] = useState(false);
+
+  async function send() {
+    if (!prompt.trim()) return;
+    const userMsg = { role: "user", content: prompt };
+    setMessages((m) => [...m, userMsg]);
+    setPrompt("");
+    setLoading(true);
+    try {
+      const res = await backendPost<{ text?: string; error?: string }>("/api/ai/student-infer", { prompt: userMsg.content });
+      setMessages((m) => [...m, { role: "assistant", content: res.text ?? res.error ?? JSON.stringify(res) }]);
+    } catch (e) {
+      setMessages((m) => [...m, { role: "assistant", content: e instanceof Error ? e.message : "Failed" }]);
+    } finally {
+      setLoading(false);
+    }
+  }
 
   return (
-    <RoleShell
-      title={data?.hero.title ?? "AI companion"}
-      subtitle={data?.hero.subtitle ?? "Database-backed conversation stream"}
-      eyebrow={data?.hero.eyebrow ?? "Database Content"}
-      navItems={data?.navItems ?? studentFallbackNav}
-      activePath="/student/ai-companion"
-      actionLabel={data?.hero.actionLabel}
-      actionHref={data?.hero.actionHref}
-      brandLabel={data?.brandLabel ?? "SANKALP AEI"}
-    >
-      {!data ? (
-        <DatabaseState loading={loading} error={error} pathHint={pathHint} />
-      ) : (
-        <>
-          <Card title={data.session.title} subtitle={data.session.subtitle} style={{ gridColumn: "span 8" }}>
-            <div className="chip-row" style={{ marginBottom: 12 }}>
-              {data.quickPrompts.map((prompt) => (
-                <Badge key={prompt} tone="primary">
-                  {prompt}
-                </Badge>
-              ))}
+    <RoleShell title="AI companion" subtitle="Student-safe gateway" navItems={studentNav} activePath="/student/ai-companion" brandLabel="SANKALP AEI">
+      <Card title="Conversation" style={{ gridColumn: "span 12" }}>
+        <div className="grid gap-2 mb-4 max-h-96 overflow-y-auto">
+          {messages.map((m, i) => (
+            <div key={i} className={`p-3 rounded-lg ${m.role === "assistant" ? "nm-surface-soft" : "nm-surface"}`}>
+              {m.content}
             </div>
-            <div className="nm-inset" style={{ padding: 14, borderRadius: "var(--radius-md)", display: "grid", gap: 10 }}>
-              {data.messages.map((message, index) => (
-                <div
-                  key={`${message.timestamp}-${index}`}
-                  className={message.role === "assistant" ? "nm-surface-soft" : "nm-surface"}
-                  style={{
-                    borderRadius: "var(--radius-sm)",
-                    padding: 10,
-                    justifySelf: message.role === "assistant" ? "start" : "end",
-                    maxWidth: "82%",
-                  }}
-                >
-                  <p style={{ margin: 0 }}>{message.content}</p>
-                  <p className="muted" style={{ margin: "6px 0 0", fontSize: "var(--font-size-xs)" }}>
-                    {message.timestamp}
-                  </p>
-                </div>
-              ))}
-            </div>
-            <div className="nm-inset" style={{ marginTop: 12, borderRadius: "var(--radius-full)", padding: 8, display: "flex", gap: 8 }}>
-              <input
-                placeholder={data.composer.placeholder}
-                style={{
-                  flex: 1,
-                  border: "none",
-                  outline: "none",
-                  background: "transparent",
-                  color: "var(--color-text-primary)",
-                  paddingInline: 8,
-                }}
-              />
-              <Button variant="primary" size="sm">
-                {data.composer.sendLabel}
-              </Button>
-            </div>
-          </Card>
-
-          <Card title={data.sections.contextTitle} subtitle={data.sections.contextSubtitle} style={{ gridColumn: "span 4" }}>
-            <ul className="list-clean">
-              {data.contextMetrics.map((metric) => (
-                <li key={metric.label} className="nm-surface-soft" style={{ padding: 12, borderRadius: "var(--radius-sm)" }}>
-                  <strong>{metric.label}</strong>
-                  <p style={{ margin: "6px 0", fontWeight: 700 }}>{metric.value}</p>
-                  <p className="section-copy" style={{ margin: 0 }}>{metric.hint}</p>
-                </li>
-              ))}
-            </ul>
-          </Card>
-        </>
-      )}
+          ))}
+        </div>
+        <div className="flex flex-col sm:flex-row gap-2">
+          <input
+            className="nm-input flex-1 min-h-[44px]"
+            value={prompt}
+            onChange={(e) => setPrompt(e.target.value)}
+            placeholder="Ask the AI companion…"
+            onKeyDown={(e) => e.key === "Enter" && void send()}
+          />
+          <Button variant="primary" onClick={() => void send()} disabled={loading} className="min-h-[44px]">
+            {loading ? "Sending…" : "Send"}
+          </Button>
+        </div>
+      </Card>
     </RoleShell>
   );
 }

@@ -8,10 +8,11 @@ const roleHomeMap: Record<AppRole, string> = {
   STUDENT: "/student/dashboard",
   TEACHER: "/teacher/dashboard",
   PARENT: "/parent/dashboard",
+  ADMIN: "/admin",
 };
 
 export function normalizeRole(value: string | null | undefined): AppRole | null {
-  if (value === "STUDENT" || value === "TEACHER" || value === "PARENT") {
+  if (value === "STUDENT" || value === "TEACHER" || value === "PARENT" || value === "ADMIN") {
     return value;
   }
 
