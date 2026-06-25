@@ -54,7 +54,7 @@ env:
       - BUILD
       - RUNTIME
   - variable: NEXT_PUBLIC_ML_SERVICE_URL
-    value: "https://ml-training-production-a139.up.railway.app"
+    value: "https://web-production-19e90.up.railway.app"
     availability:
       - BUILD
       - RUNTIME
