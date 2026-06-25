@@ -1,12 +1,18 @@
 import type { Metadata } from "next";
-import { Inter, Manrope } from "next/font/google";
+import { Inter, Newsreader, JetBrains_Mono } from "next/font/google";
 import { AuthSessionSync } from "@/components/layout/AuthSessionSync";
 import { QueryProvider } from "@/components/providers/QueryProvider";
 import { SchoolProvider } from "@/components/providers/SchoolProvider";
 import "./globals.css";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
-const manrope = Manrope({ subsets: ["latin"], variable: "--font-headline" });
+const newsreader = Newsreader({
+  subsets: ["latin"],
+  variable: "--font-headline",
+  weight: ["400", "500", "600", "700"],
+  style: ["normal", "italic"],
+});
+const jetbrainsMono = JetBrains_Mono({ subsets: ["latin"], variable: "--font-mono" });
 
 export const metadata: Metadata = {
   title: "Sankalp AEI",
@@ -19,8 +25,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body className={`${inter.variable} ${manrope.variable}`}>
+    <html lang="en" className="antialiased">
+      <body className={`${inter.variable} ${newsreader.variable} ${jetbrainsMono.variable}`}>
         <AuthSessionSync />
         <QueryProvider>
           <SchoolProvider>{children}</SchoolProvider>

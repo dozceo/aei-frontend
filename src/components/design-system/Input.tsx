@@ -12,7 +12,16 @@ export function Input({ label, hint, className, id, style, ...rest }: InputProps
   return (
     <div style={{ display: "grid", gap: 8 }}>
       {label ? (
-        <label htmlFor={inputId} style={{ fontWeight: 600, fontSize: "var(--font-size-xs)", letterSpacing: "0.12em" }}>
+        <label
+          htmlFor={inputId}
+          style={{
+            fontWeight: 700,
+            fontSize: "11px",
+            letterSpacing: "0.12em",
+            textTransform: "uppercase",
+            color: "var(--color-text-secondary)",
+          }}
+        >
           {label}
         </label>
       ) : null}
@@ -20,12 +29,13 @@ export function Input({ label, hint, className, id, style, ...rest }: InputProps
         id={inputId}
         className={cn("nm-inset", className)}
         style={{
-          border: "1px solid var(--color-border)",
-          padding: "12px 14px",
-          borderRadius: "var(--radius-full)",
+          padding: "12px 16px",
+          borderRadius: "var(--radius-md)",
           fontSize: "var(--font-size-sm)",
           color: "var(--color-text-primary)",
+          background: "var(--paper)",
           outline: "none",
+          minHeight: 44,
           ...style,
         }}
         {...rest}

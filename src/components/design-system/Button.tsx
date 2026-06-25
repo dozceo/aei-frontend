@@ -1,7 +1,7 @@
 import type { ButtonHTMLAttributes, ReactNode } from "react";
 import { cn } from "@/lib/cn";
 
-type ButtonVariant = "primary" | "secondary" | "danger" | "ghost";
+type ButtonVariant = "primary" | "secondary" | "ghost" | "danger";
 type ButtonSize = "sm" | "md" | "lg";
 
 export interface ButtonProps extends Omit<ButtonHTMLAttributes<HTMLButtonElement>, "children"> {
@@ -10,53 +10,53 @@ export interface ButtonProps extends Omit<ButtonHTMLAttributes<HTMLButtonElement
   size?: ButtonSize;
   loading?: boolean;
   fullWidth?: boolean;
+  leftIcon?: ReactNode;
+  rightIcon?: ReactNode;
 }
 
 const sizeMap: Record<ButtonSize, string> = {
-  sm: "8px 12px",
-  md: "10px 16px",
-  lg: "14px 22px",
+  sm: "8px 14px",
+  md: "11px 18px",
+  lg: "14px 24px",
 };
 
 const fontMap: Record<ButtonSize, string> = {
-  sm: "var(--font-size-xs)",
-  md: "var(--font-size-sm)",
-  lg: "var(--font-size-md)",
+  sm: "13px",
+  md: "14px",
+  lg: "16px",
 };
 
-function getVariantStyle(variant: ButtonVariant): React.CSSProperties {
-  if (variant === "primary") {
-    return {
-      color: "#fff",
-      background: "linear-gradient(110deg, var(--color-primary-strong), var(--color-primary))",
-      boxShadow: "var(--shadow-sm)",
-      border: "1px solid rgba(101, 62, 232, 0.32)",
-    };
+function variantStyle(variant: ButtonVariant): React.CSSProperties {
+  switch (variant) {
+    case "primary":
+      return {
+        color: "var(--paper)",
+        background: "linear-gradient(135deg, var(--color-primary), var(--color-primary-strong))",
+        boxShadow: "var(--neu-raised-sm)",
+        border: "1px solid color-mix(in srgb, var(--color-primary-strong) 60%, transparent)",
+      };
+    case "danger":
+      return {
+        color: "#fff",
+        background: "linear-gradient(135deg, var(--coral-deep), color-mix(in srgb, var(--coral-deep) 80%, #000))",
+        boxShadow: "var(--neu-raised-sm)",
+        border: "1px solid color-mix(in srgb, var(--coral-deep) 55%, transparent)",
+      };
+    case "ghost":
+      return {
+        color: "var(--color-text-secondary)",
+        background: "transparent",
+        border: "1px solid transparent",
+      };
+    case "secondary":
+    default:
+      return {
+        color: "var(--color-primary)",
+        background: "var(--paper)",
+        boxShadow: "var(--neu-raised-sm)",
+        border: "1px solid rgba(255,255,255,0.55)",
+      };
   }
-
-  if (variant === "secondary") {
-    return {
-      color: "var(--color-primary)",
-      background: "linear-gradient(145deg, #edf2f9, #d6dce6)",
-      boxShadow: "var(--shadow-sm)",
-      border: "1px solid var(--color-border)",
-    };
-  }
-
-  if (variant === "danger") {
-    return {
-      color: "#fff",
-      background: "linear-gradient(110deg, #f56d7a, var(--color-error))",
-      boxShadow: "var(--shadow-sm)",
-      border: "1px solid rgba(204, 72, 88, 0.3)",
-    };
-  }
-
-  return {
-    color: "var(--color-text-secondary)",
-    background: "transparent",
-    border: "1px solid var(--color-border)",
-  };
 }
 
 export function Button({
@@ -67,27 +67,36 @@ export function Button({
   loading = false,
   fullWidth = false,
   disabled,
+  leftIcon,
+  rightIcon,
   ...rest
 }: ButtonProps) {
   const isDisabled = disabled || loading;
 
   return (
     <button
-      className={cn("button-root", className)}
+      className={cn("press", className)}
       style={{
-        ...getVariantStyle(variant),
+        ...variantStyle(variant),
         padding: sizeMap[size],
+        // optical: trim the icon side by 2px
+        paddingRight: rightIcon ? `calc(${sizeMap[size].split(" ")[1]} - 2px)` : undefined,
+        paddingLeft: leftIcon ? `calc(${sizeMap[size].split(" ")[1]} - 2px)` : undefined,
         borderRadius: "var(--radius-full)",
         fontWeight: 700,
         fontSize: fontMap[size],
+        letterSpacing: "-0.01em",
         cursor: isDisabled ? "not-allowed" : "pointer",
         width: fullWidth ? "100%" : undefined,
-        opacity: isDisabled ? 0.58 : 1,
-        transition: "transform var(--transition-fast), filter var(--transition-default)",
+        opacity: isDisabled ? 0.55 : 1,
+        minHeight: 40,
         display: "inline-flex",
         alignItems: "center",
         justifyContent: "center",
         gap: 8,
+        transitionProperty: "transform, box-shadow, filter",
+        transitionDuration: "150ms",
+        transitionTimingFunction: "cubic-bezier(0.2,0,0,1)",
       }}
       disabled={isDisabled}
       aria-busy={loading}
@@ -97,15 +106,19 @@ export function Button({
         <span
           aria-hidden="true"
           style={{
-            width: 12,
-            height: 12,
+            width: 13,
+            height: 13,
             borderRadius: 9999,
-            border: "2px solid rgba(255,255,255,0.42)",
+            border: "2px solid rgba(255,255,255,0.4)",
             borderTopColor: "currentColor",
+            animation: "spin 0.7s linear infinite",
           }}
         />
-      ) : null}
-      {children}
+      ) : (
+        leftIcon
+      )}
+      <span>{children}</span>
+      {!loading && rightIcon}
     </button>
   );
 }

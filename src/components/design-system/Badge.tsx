@@ -1,28 +1,42 @@
 import type { ReactNode } from "react";
 
-type BadgeTone = "primary" | "neutral" | "success" | "warning" | "error";
+type BadgeTone = "primary" | "neutral" | "success" | "warning" | "error" | "sky" | "honey" | "sage" | "coral" | "aub";
 
-export function Badge({ tone = "neutral", children }: { tone?: BadgeTone; children: ReactNode }) {
-  const toneStyles: Record<BadgeTone, React.CSSProperties> = {
-    primary: { color: "var(--color-primary)", background: "rgba(111, 60, 244, 0.12)" },
-    neutral: { color: "var(--color-text-secondary)", background: "rgba(122, 132, 152, 0.12)" },
-    success: { color: "var(--color-success)", background: "rgba(23, 155, 107, 0.12)" },
-    warning: { color: "var(--color-warning)", background: "rgba(242, 155, 56, 0.12)" },
-    error: { color: "var(--color-error)", background: "rgba(232, 92, 106, 0.12)" },
-  };
+const toneColor: Record<BadgeTone, { fg: string; bg: string }> = {
+  primary: { fg: "var(--color-primary)", bg: "color-mix(in srgb, var(--color-primary) 14%, transparent)" },
+  neutral: { fg: "var(--color-text-secondary)", bg: "color-mix(in srgb, var(--ink-faint) 16%, transparent)" },
+  success: { fg: "var(--sage-deep)", bg: "color-mix(in srgb, var(--sage-deep) 16%, transparent)" },
+  warning: { fg: "var(--honey-deep)", bg: "color-mix(in srgb, var(--honey-deep) 18%, transparent)" },
+  error: { fg: "var(--coral-deep)", bg: "color-mix(in srgb, var(--coral-deep) 16%, transparent)" },
+  sky: { fg: "var(--sky-deep)", bg: "color-mix(in srgb, var(--sky-deep) 16%, transparent)" },
+  honey: { fg: "var(--honey-deep)", bg: "color-mix(in srgb, var(--honey-deep) 18%, transparent)" },
+  sage: { fg: "var(--sage-deep)", bg: "color-mix(in srgb, var(--sage-deep) 16%, transparent)" },
+  coral: { fg: "var(--coral-deep)", bg: "color-mix(in srgb, var(--coral-deep) 16%, transparent)" },
+  aub: { fg: "var(--aub-deep)", bg: "color-mix(in srgb, var(--aub-deep) 16%, transparent)" },
+};
 
+export function Badge({ tone = "neutral", dot = false, children }: { tone?: BadgeTone; dot?: boolean; children: ReactNode }) {
+  const c = toneColor[tone];
   return (
     <span
       style={{
-        ...toneStyles[tone],
-        padding: "4px 10px",
+        display: "inline-flex",
+        alignItems: "center",
+        gap: 6,
+        color: c.fg,
+        background: c.bg,
+        padding: "4px 11px",
         borderRadius: "var(--radius-full)",
-        fontSize: "var(--font-size-xs)",
+        fontSize: "11px",
         fontWeight: 700,
-        letterSpacing: "0.06em",
+        letterSpacing: "0.05em",
         textTransform: "uppercase",
+        lineHeight: 1.5,
       }}
     >
+      {dot ? (
+        <span aria-hidden="true" style={{ width: 6, height: 6, borderRadius: 9999, background: "currentColor" }} />
+      ) : null}
       {children}
     </span>
   );

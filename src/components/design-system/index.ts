@@ -1,5 +1,10 @@
 export { Badge } from "./Badge";
 export { Button } from "./Button";
 export { Card } from "./Card";
+export type { Accent, CardProps } from "./Card";
 export { Input } from "./Input";
 export { Progress } from "./Progress";
+export { StatCard } from "./StatCard";
+export type { StatCardProps } from "./StatCard";
+export { SectionTitle } from "./SectionTitle";
+export { Reveal, RevealItem } from "./Reveal";

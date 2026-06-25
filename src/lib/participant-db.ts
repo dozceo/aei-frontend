@@ -10,6 +10,7 @@ export interface ParticipantDoc {
   percentile?: number;
   xp?: number;
   level?: number;
+  streak?: number;
   parentEmails?: string[];
 }
 
