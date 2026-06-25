@@ -47,6 +47,8 @@ export function Card({
         overflow: "hidden",
         padding: 20,
         borderRadius: "var(--radius-lg)",
+        minWidth: 0,
+        maxWidth: "100%",
         ...style,
       }}
       {...rest}

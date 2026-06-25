@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { doc, onSnapshot } from "firebase/firestore";
 import { Badge, Card, Progress } from "@/components/design-system";
+import { GridCell } from "@/components/layout/GridCell";
 import { useSchool } from "@/components/providers/SchoolProvider";
 import { db } from "@/lib/firebase-client";
 import { fetchParticipantsPage } from "@/lib/intelligence/academic/participants-query";
@@ -55,19 +56,31 @@ export function TeacherStudentsPortal() {
     return map;
   }, [predictions]);
 
-  if (loading) return <Card title="Loading roster…" subtitle="participants collection" style={{ gridColumn: "span 12" }}><p className="muted">Fetching students…</p></Card>;
-  if (error) return <Card title="Roster error" subtitle={error} style={{ gridColumn: "span 12" }}><p className="section-copy">{error}</p></Card>;
+  if (loading) {
+    return (
+      <GridCell span={12}>
+        <Card title="Loading roster…" subtitle="participants collection"><p className="muted">Fetching students…</p></Card>
+      </GridCell>
+    );
+  }
+  if (error) {
+    return (
+      <GridCell span={12}>
+        <Card title="Roster error" subtitle={error}><p className="section-copy">{error}</p></Card>
+      </GridCell>
+    );
+  }
 
   return (
-    <>
-      <Card title="Class roster" subtitle={`${rows.length} students · ${activeSchoolId ?? "zero2dev"}`} accent="sky" style={{ gridColumn: "span 12" }}>
+    <GridCell span={12}>
+      <Card title="Class roster" subtitle={`${rows.length} students · ${activeSchoolId ?? "zero2dev"}`} accent="sky">
         <div className="chip-row" style={{ marginBottom: 16 }}>
           <input
             className="nm-inset"
             placeholder="Filter by division ID (optional)"
             value={classId}
             onChange={(e) => setClassId(e.target.value)}
-            style={{ flex: 1, minWidth: 200, padding: "10px 14px", borderRadius: "var(--radius-md)", minHeight: 44 }}
+            style={{ flex: "1 1 200px", minWidth: 0, padding: "10px 14px", borderRadius: "var(--radius-md)", minHeight: 44 }}
           />
           {summary ? (
             <>
@@ -78,14 +91,14 @@ export function TeacherStudentsPortal() {
           ) : null}
           {mlLoading ? <Badge tone="neutral">ML scoring…</Badge> : null}
         </div>
-        <div style={{ overflowX: "auto" }}>
-          <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 14 }}>
+        <div className="table-wrap">
+          <table className="table-stack">
             <thead>
-              <tr style={{ textAlign: "left", color: "var(--color-text-secondary)" }}>
-                <th style={{ padding: "10px 8px" }}>Student</th>
-                <th style={{ padding: "10px 8px" }}>Division</th>
-                <th style={{ padding: "10px 8px" }}>Percentile</th>
-                <th style={{ padding: "10px 8px" }}>ML signal</th>
+              <tr style={{ color: "var(--color-text-secondary)" }}>
+                <th>Student</th>
+                <th>Division</th>
+                <th>Percentile</th>
+                <th>ML signal</th>
               </tr>
             </thead>
             <tbody>
@@ -93,11 +106,11 @@ export function TeacherStudentsPortal() {
                 const pred = predById.get(row.bookingId || row.id);
                 const signal = pred?.decision?.category;
                 return (
-                  <tr key={row.id} className="nm-inset" style={{ borderBottom: "1px solid var(--color-border)" }}>
-                    <td style={{ padding: "12px 8px", fontWeight: 600 }}>{row.name ?? row.bookingId}</td>
-                    <td style={{ padding: "12px 8px" }} className="nums">{row.divisionId ?? row.classId ?? "—"}</td>
-                    <td style={{ padding: "12px 8px" }} className="nums">{row.percentile ?? "—"}</td>
-                    <td style={{ padding: "12px 8px" }}>
+                  <tr key={row.id} className="nm-inset">
+                    <td data-label="Student" style={{ fontWeight: 600 }}>{row.name ?? row.bookingId}</td>
+                    <td data-label="Division" className="nums">{row.divisionId ?? row.classId ?? "—"}</td>
+                    <td data-label="Percentile" className="nums">{row.percentile ?? "—"}</td>
+                    <td data-label="ML signal">
                       {signal ? <Badge tone={signal === "urgent_review" ? "coral" : signal === "continuation" ? "sage" : "honey"}>{categoryLabel(signal)}</Badge> : "—"}
                     </td>
                   </tr>
@@ -107,7 +120,7 @@ export function TeacherStudentsPortal() {
           </table>
         </div>
       </Card>
-    </>
+    </GridCell>
   );
 }
 
@@ -130,32 +143,34 @@ export function TeacherHeatmapPortal() {
   const topics = cohort?.topics as Record<string, { label?: string; avg?: number }> | undefined;
 
   return (
-    <Card title="Chapter heatmap" subtitle="Published teacher_cohort snapshot" accent="honey" style={{ gridColumn: "span 12" }}>
-      <div style={{ display: "grid", gap: 12, marginBottom: 16 }}>
-        <input
-          className="nm-inset"
-          placeholder="Enter class/division ID (e.g. div-a)"
-          value={classId}
-          onChange={(e) => setClassId(e.target.value.trim())}
-          style={{ padding: "10px 14px", borderRadius: "var(--radius-md)", minHeight: 44 }}
-        />
-        <p className="section-copy">School: {activeSchoolId ?? "zero2dev"}. Load a published cohort doc to see topic mastery averages.</p>
-      </div>
-      {loading ? <p className="muted">Loading cohort…</p> : null}
-      {!loading && classId && !cohort ? <p className="muted">No published cohort at teacher_cohort/{classId}</p> : null}
-      {topics ? (
-        <div style={{ display: "grid", gap: 12 }}>
-          {Object.entries(topics).map(([tid, t]) => (
-            <div key={tid}>
-              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
-                <strong>{t.label ?? tid}</strong>
-                <span className="nums">{typeof t.avg === "number" ? `${Math.round(t.avg * 100)}%` : "—"}</span>
-              </div>
-              <Progress value={typeof t.avg === "number" ? t.avg * 100 : 0} tone="honey" />
-            </div>
-          ))}
+    <GridCell span={12}>
+      <Card title="Chapter heatmap" subtitle="Published teacher_cohort snapshot" accent="honey">
+        <div style={{ display: "grid", gap: 12, marginBottom: 16 }}>
+          <input
+            className="nm-inset"
+            placeholder="Enter class/division ID (e.g. div-a)"
+            value={classId}
+            onChange={(e) => setClassId(e.target.value.trim())}
+            style={{ width: "100%", maxWidth: "100%", padding: "10px 14px", borderRadius: "var(--radius-md)", minHeight: 44, boxSizing: "border-box" }}
+          />
+          <p className="section-copy">School: {activeSchoolId ?? "zero2dev"}. Load a published cohort doc to see topic mastery averages.</p>
         </div>
-      ) : null}
-    </Card>
+        {loading ? <p className="muted">Loading cohort…</p> : null}
+        {!loading && classId && !cohort ? <p className="muted">No published cohort at teacher_cohort/{classId}</p> : null}
+        {topics ? (
+          <div style={{ display: "grid", gap: 12 }}>
+            {Object.entries(topics).map(([tid, t]) => (
+              <div key={tid} style={{ minWidth: 0 }}>
+                <div style={{ display: "flex", justifyContent: "space-between", gap: 8, marginBottom: 6, flexWrap: "wrap" }}>
+                  <strong style={{ overflowWrap: "anywhere" }}>{t.label ?? tid}</strong>
+                  <span className="nums">{typeof t.avg === "number" ? `${Math.round(t.avg * 100)}%` : "—"}</span>
+                </div>
+                <Progress value={typeof t.avg === "number" ? t.avg * 100 : 0} tone="honey" />
+              </div>
+            ))}
+          </div>
+        ) : null}
+      </Card>
+    </GridCell>
   );
 }

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { collection, doc, getDoc, getDocs, setDoc } from "firebase/firestore";
 import { Badge, Button, Card, Progress } from "@/components/design-system";
+import { GridCell } from "@/components/layout/GridCell";
 import { useSchool } from "@/components/providers/SchoolProvider";
 import { backendPost } from "@/lib/backend-client";
 import { db } from "@/lib/firebase-client";
@@ -52,13 +53,14 @@ export function AdminEwsPortal() {
   const risk = cohort?.risk as Record<string, number> | undefined;
 
   return (
-    <Card title="Early Warning System" subtitle="Cohort risk snapshots" accent="coral" style={{ gridColumn: "span 12" }}>
+    <GridCell span={12}>
+    <Card title="Early Warning System" subtitle="Cohort risk snapshots" accent="coral">
       <div className="chip-row" style={{ marginBottom: 16 }}>
         <select
           className="nm-inset"
           value={selectedClass}
           onChange={(e) => setSelectedClass(e.target.value)}
-          style={{ padding: "10px 14px", borderRadius: "var(--radius-md)", minHeight: 44, minWidth: 200 }}
+          style={{ padding: "10px 14px", borderRadius: "var(--radius-md)", minHeight: 44, minWidth: 0, flex: "1 1 200px" }}
         >
           <option value="">Select class</option>
           {classes.map((c) => (
@@ -69,7 +71,7 @@ export function AdminEwsPortal() {
         {message ? <Badge tone="sky">{message}</Badge> : null}
       </div>
       {cohort ? (
-        <div className="card-grid-3" style={{ gridColumn: "span 12" }}>
+        <div className="card-grid-3">
           <StatTile label="Critical" value={risk?.tier1_critical ?? 0} tone="coral" />
           <StatTile label="At risk" value={risk?.tier2_at_risk ?? 0} tone="honey" />
           <StatTile label="Monitor" value={risk?.tier3_monitoring ?? 0} tone="sky" />
@@ -78,6 +80,7 @@ export function AdminEwsPortal() {
         <p className="muted">Select a class to load published EWS snapshot from teacher_cohort.</p>
       )}
     </Card>
+    </GridCell>
   );
 }
 
@@ -110,32 +113,33 @@ export function AdminRosterPortal() {
   });
 
   return (
-    <Card title="Participant roster" subtitle={`${filtered.length} students`} accent="sage" style={{ gridColumn: "span 12" }}>
+    <GridCell span={12}>
+    <Card title="Participant roster" subtitle={`${filtered.length} students`} accent="sage">
       <input
         className="nm-inset"
         placeholder="Search by name or booking ID"
         value={search}
         onChange={(e) => setSearch(e.target.value)}
-        style={{ width: "100%", padding: "10px 14px", borderRadius: "var(--radius-md)", minHeight: 44, marginBottom: 16 }}
+        style={{ width: "100%", maxWidth: "100%", padding: "10px 14px", borderRadius: "var(--radius-md)", minHeight: 44, marginBottom: 16, boxSizing: "border-box" }}
       />
       {loading ? <p className="muted">Loading…</p> : (
-        <div style={{ overflowX: "auto" }}>
-          <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 14 }}>
+        <div className="table-wrap">
+          <table className="table-stack">
             <thead>
-              <tr style={{ color: "var(--color-text-secondary)", textAlign: "left" }}>
-                <th style={{ padding: 8 }}>Name</th>
-                <th style={{ padding: 8 }}>Booking</th>
-                <th style={{ padding: 8 }}>Division</th>
-                <th style={{ padding: 8 }}>Percentile</th>
+              <tr style={{ color: "var(--color-text-secondary)" }}>
+                <th>Name</th>
+                <th>Booking</th>
+                <th>Division</th>
+                <th>Percentile</th>
               </tr>
             </thead>
             <tbody>
               {filtered.map((r) => (
                 <tr key={String(r.id)}>
-                  <td style={{ padding: "10px 8px" }}>{String(r.name ?? "—")}</td>
-                  <td style={{ padding: "10px 8px" }} className="nums">{String(r.bookingId ?? r.id)}</td>
-                  <td style={{ padding: "10px 8px" }}>{String(r.divisionId ?? r.classId ?? "—")}</td>
-                  <td style={{ padding: "10px 8px" }} className="nums">{String(r.percentile ?? "—")}</td>
+                  <td data-label="Name">{String(r.name ?? "—")}</td>
+                  <td data-label="Booking" className="nums">{String(r.bookingId ?? r.id)}</td>
+                  <td data-label="Division">{String(r.divisionId ?? r.classId ?? "—")}</td>
+                  <td data-label="Percentile" className="nums">{String(r.percentile ?? "—")}</td>
                 </tr>
               ))}
             </tbody>
@@ -143,6 +147,7 @@ export function AdminRosterPortal() {
         </div>
       )}
     </Card>
+    </GridCell>
   );
 }
 
@@ -200,7 +205,8 @@ export function AdminAttendancePortal() {
   const rate = rows.length ? Math.round((presentIds.length / rows.length) * 100) : 0;
 
   return (
-    <Card title="Attendance register" subtitle={registerId} accent="sky" style={{ gridColumn: "span 12" }}>
+    <GridCell span={12}>
+    <Card title="Attendance register" subtitle={registerId} accent="sky">
       <div className="chip-row" style={{ marginBottom: 16 }}>
         <input className="nm-inset" placeholder="Division ID" value={divisionId} onChange={(e) => setDivisionId(e.target.value)} style={{ padding: "10px 14px", borderRadius: "var(--radius-md)", minHeight: 44 }} />
         <input className="nm-inset" type="date" value={date} onChange={(e) => setDate(e.target.value)} style={{ padding: "10px 14px", borderRadius: "var(--radius-md)", minHeight: 44 }} />
@@ -209,8 +215,8 @@ export function AdminAttendancePortal() {
       {rows.length > 0 ? <Progress label="Attendance rate" value={rate} tone="sage" /> : null}
       <ul className="list-clean" style={{ marginTop: 16 }}>
         {rows.map((r) => (
-          <li key={r.id} className="nm-inset" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 14px", borderRadius: "var(--radius-md)", minHeight: 44 }}>
-            <span>{r.name ?? r.id}</span>
+          <li key={r.id} className="nm-inset" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8, flexWrap: "wrap", padding: "10px 14px", borderRadius: "var(--radius-md)", minHeight: 44 }}>
+            <span style={{ overflowWrap: "anywhere", minWidth: 0 }}>{r.name ?? r.id}</span>
             <Button variant={presentIds.includes(r.id) ? "primary" : "ghost"} size="sm" onClick={() => toggle(r.id)}>
               {presentIds.includes(r.id) ? "Present" : "Absent"}
             </Button>
@@ -221,5 +227,6 @@ export function AdminAttendancePortal() {
         <Button variant="primary" loading={saving} onClick={() => void saveRegister()} style={{ marginTop: 16 }}>Save register</Button>
       ) : null}
     </Card>
+    </GridCell>
   );
 }

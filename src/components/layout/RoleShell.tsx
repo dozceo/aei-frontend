@@ -1,13 +1,7 @@
 import Link from "next/link";
 import type { CSSProperties, ReactNode } from "react";
 import type { Accent } from "@/components/design-system";
-
-interface ShellNavItem {
-  href: string;
-  label: string;
-  shortLabel?: string;
-  icon?: ReactNode;
-}
+import { ShellNav, type ShellNavItem } from "@/components/layout/ShellNav";
 
 interface RoleShellProps {
   title: string;
@@ -47,56 +41,36 @@ export function RoleShell({
   const [brandHead, ...brandRest] = brandLabel.split(" ");
 
   return (
-    <main className="app-shell">
-      <header className="top-nav nm-surface">
-        <Link href="/" className="brand" aria-label={brandLabel}>
-          {brandHead} <span>{brandRest.join(" ")}</span>
-        </Link>
-        <nav className="nav-links no-scrollbar" aria-label="Role navigation">
-          {navItems.map((item) => {
-            const active = activePath === item.href;
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={`nav-link${active ? " active" : ""}`}
-                aria-current={active ? "page" : undefined}
-                title={item.label}
-              >
-                {item.icon ? <span className="nav-icon" aria-hidden="true">{item.icon}</span> : null}
-                <span className="nav-label-full">{item.label}</span>
-                <span className="nav-label-short">{item.shortLabel ?? item.label.split(" ").pop()}</span>
+    <div className="shell-root">
+      <main className="app-shell">
+        <header className="top-nav nm-surface">
+          <Link href="/" className="brand" aria-label={brandLabel}>
+            {brandHead} <span>{brandRest.join(" ")}</span>
+          </Link>
+          <div className="top-nav-actions top-nav-actions-desktop">
+            {actions}
+            {actionLabel && actionHref ? (
+              <Link href={actionHref} className="top-nav-cta press">
+                <span className="nav-cta-full">{actionLabel}</span>
+                <span className="nav-cta-short">Go</span>
               </Link>
-            );
-          })}
-        </nav>
-        <div className="top-nav-actions">
-          {actions}
-          {actionLabel && actionHref ? (
-            <Link href={actionHref} className="top-nav-cta press">
-              <span className="nav-cta-full">{actionLabel}</span>
-              <span className="nav-cta-short">Go</span>
-            </Link>
-          ) : null}
-        </div>
-      </header>
+            ) : null}
+          </div>
+        </header>
 
-      <section className="nm-surface hero-block hero-enter" style={{ marginBottom: "var(--space-lg)" }}>
-        <span
-          aria-hidden="true"
-          className="hero-glow"
-          style={{ background: accentTint[accent] }}
-        />
-        <div style={{ position: "relative", display: "grid", gap: 8 }}>
-          <span className="eyebrow hero-enter-item" style={{ ["--i" as string]: 0 } as CSSProperties}>{eyebrow}</span>
-          <h1 className="font-serif-brand hero-enter-item" style={{ margin: "4px 0 0", fontSize: "clamp(26px, 4.4vw, 48px)", lineHeight: 1.05, letterSpacing: "-0.02em", ["--i" as string]: 1 } as CSSProperties}>
-            {title}
-          </h1>
-          <p className="section-copy hero-enter-item" style={{ fontSize: "var(--font-size-md)", ["--i" as string]: 2 } as CSSProperties}>{subtitle}</p>
-        </div>
-      </section>
+        <ShellNav items={navItems} activePath={activePath} actionLabel={actionLabel} actionHref={actionHref} />
 
-      <div className="dashboard-grid stagger">{children}</div>
-    </main>
+        <section className="nm-surface hero-block" style={{ marginBottom: "var(--space-lg)" }}>
+          <span aria-hidden="true" className="hero-glow" style={{ background: accentTint[accent] }} />
+          <div style={{ position: "relative", display: "grid", gap: 8, minWidth: 0 }}>
+            <span className="eyebrow hero-enter-item" style={{ ["--i" as string]: 0 } as CSSProperties}>{eyebrow}</span>
+            <h1 className="font-serif-brand hero-enter-item hero-title" style={{ ["--i" as string]: 1 } as CSSProperties}>{title}</h1>
+            <p className="section-copy hero-enter-item" style={{ ["--i" as string]: 2 } as CSSProperties}>{subtitle}</p>
+          </div>
+        </section>
+
+        <div className="dashboard-grid">{children}</div>
+      </main>
+    </div>
   );
 }
