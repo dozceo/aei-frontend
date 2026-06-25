@@ -18,7 +18,7 @@ const item = {
   },
 } as const;
 
-/** Staggered enter container. Wrap a group of RevealItem children. */
+/** Staggered enter container. Prefer CSS `.hero-enter` for critical above-the-fold content. */
 export function Reveal({ children, className, style, ...rest }: HTMLMotionProps<"div"> & { children: ReactNode }) {
   return (
     <motion.div initial="hidden" animate="visible" variants={container} className={className} style={style} {...rest}>
@@ -27,7 +27,6 @@ export function Reveal({ children, className, style, ...rest }: HTMLMotionProps<
   );
 }
 
-/** A single staggered child. Pass `span` to set its grid column span. */
 export function RevealItem({
   children,
   span,

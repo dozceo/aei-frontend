@@ -6,13 +6,11 @@ function redirectTo(request: NextRequest, pathname: string, searchParams?: Recor
   const redirectUrl = request.nextUrl.clone();
   redirectUrl.pathname = pathname;
   redirectUrl.search = "";
-
   if (searchParams) {
     Object.entries(searchParams).forEach(([key, value]) => {
       redirectUrl.searchParams.set(key, value);
     });
   }
-
   return NextResponse.redirect(redirectUrl);
 }
 
@@ -24,8 +22,14 @@ export function middleware(request: NextRequest): NextResponse {
   const isAuthenticated = isAuthenticatedValue(authCookieValue);
   const role = normalizeRole(roleCookieValue);
 
-  if ((pathname === "/login" || pathname === "/auth/signup" || pathname === "/auth/forgot-password") && isAuthenticated && role) {
-    return redirectTo(request, getRoleHome(role));
+  const authEntryPaths = ["/login", "/auth/signup", "/auth/forgot-password", "/"];
+  if (authEntryPaths.includes(pathname) && isAuthenticated) {
+    if (role) {
+      return redirectTo(request, getRoleHome(role));
+    }
+    if (pathname !== "/onboarding") {
+      return redirectTo(request, "/onboarding");
+    }
   }
 
   if (!route) {
@@ -38,13 +42,10 @@ export function middleware(request: NextRequest): NextResponse {
 
   if (route.roles && route.roles.length > 0) {
     if (!role || !route.roles.includes(role)) {
-      // Only redirect if they are actually trying to access a restricted role path
-      // and they don't have that role.
       if (isAuthenticated) {
-          return redirectTo(request, getRoleHome(role), { denied: pathname });
-      } else {
-          return redirectTo(request, "/login", { next: pathname });
+        return redirectTo(request, getRoleHome(role), { denied: pathname });
       }
+      return redirectTo(request, "/login", { next: pathname });
     }
   }
 

@@ -6,6 +6,7 @@ import type { AppRole } from "@/app/routes";
 import { AUTH_COOKIE, AUTH_COOKIE_MAX_AGE_SECONDS, ROLE_COOKIE, normalizeRole } from "@/lib/auth";
 import { firebaseAuth } from "@/lib/firebase-client";
 import { getRouteConfig, normalizePath } from "@/lib/route-auth";
+import { resolveAppRole } from "@/lib/resolve-app-role";
 
 function setCookie(name: string, value: string, maxAgeSeconds: number): void {
   const secureAttribute = typeof window !== "undefined" && window.location.protocol === "https:" ? "; Secure" : "";
@@ -18,11 +19,7 @@ function getCookie(name: string): string | null {
     .split(";")
     .map((entry) => entry.trim())
     .find((entry) => entry.startsWith(prefix));
-
-  if (!match) {
-    return null;
-  }
-
+  if (!match) return null;
   return decodeURIComponent(match.slice(prefix.length));
 }
 
@@ -34,30 +31,19 @@ function clearSessionCookies(): void {
 function redirectToLoginIfProtectedRoute(): void {
   const pathname = normalizePath(window.location.pathname);
   const route = getRouteConfig(pathname);
-
-  if (!route?.requireAuth) {
-    return;
-  }
-
+  if (!route?.requireAuth) return;
   const search = new URLSearchParams({ next: pathname });
-  const destination = `/login?${search.toString()}`;
-
   if (window.location.pathname !== "/login") {
-    window.location.replace(destination);
+    window.location.replace(`/login?${search.toString()}`);
   }
 }
 
-function normalizeClaimRole(claimRole: unknown): AppRole | null {
-  if (typeof claimRole !== "string") {
-    return null;
+function persistRole(role: AppRole | null): void {
+  if (role) {
+    setCookie(ROLE_COOKIE, role, AUTH_COOKIE_MAX_AGE_SECONDS);
+  } else if (getCookie(ROLE_COOKIE)) {
+    setCookie(ROLE_COOKIE, "", 0);
   }
-
-  const normalized = claimRole.trim().toUpperCase();
-  if (normalized === "STUDENT" || normalized === "TEACHER" || normalized === "PARENT") {
-    return normalized;
-  }
-
-  return null;
 }
 
 export function AuthSessionSync() {
@@ -72,9 +58,7 @@ export function AuthSessionSync() {
     const unsubscribe = onAuthStateChanged(
       firebaseAuth,
       async (user) => {
-        if (!active) {
-          return;
-        }
+        if (!active) return;
 
         if (!user) {
           clearSessionCookies();
@@ -85,37 +69,17 @@ export function AuthSessionSync() {
         setCookie(AUTH_COOKIE, "1", AUTH_COOKIE_MAX_AGE_SECONDS);
 
         try {
-          const tokenResult = await user.getIdTokenResult();
-          if (!active) {
-            return;
-          }
-
-          const claimRole = normalizeClaimRole(tokenResult.claims.role);
-          
-          // Important: Read cookie *after* the await to avoid race conditions
-          // where sign in sets the cookie while we were fetching the token.
+          const resolved = await resolveAppRole(user);
+          if (!active) return;
           const cookieRole = normalizeRole(getCookie(ROLE_COOKIE));
-          const resolvedRole = claimRole ?? cookieRole;
-
-          if (resolvedRole) {
-            setCookie(ROLE_COOKIE, resolvedRole, AUTH_COOKIE_MAX_AGE_SECONDS);
-          } else if (getCookie(ROLE_COOKIE)) {
-            // Only clear if neither claim nor cookie has a valid role, 
-            // but the cookie actually exists.
-            setCookie(ROLE_COOKIE, "", 0);
-          }
+          persistRole(resolved ?? cookieRole);
         } catch {
           const cookieRole = normalizeRole(getCookie(ROLE_COOKIE));
-          if (cookieRole) {
-            setCookie(ROLE_COOKIE, cookieRole, AUTH_COOKIE_MAX_AGE_SECONDS);
-          }
+          if (cookieRole) persistRole(cookieRole);
         }
       },
       () => {
-        if (!active) {
-          return;
-        }
-
+        if (!active) return;
         clearSessionCookies();
         redirectToLoginIfProtectedRoute();
       },

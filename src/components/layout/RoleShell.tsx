@@ -1,11 +1,11 @@
 import Link from "next/link";
-import type { ReactNode } from "react";
-import { Reveal, RevealItem } from "@/components/design-system";
+import type { CSSProperties, ReactNode } from "react";
 import type { Accent } from "@/components/design-system";
 
 interface ShellNavItem {
   href: string;
   label: string;
+  shortLabel?: string;
   icon?: ReactNode;
 }
 
@@ -56,71 +56,45 @@ export function RoleShell({
           {navItems.map((item) => {
             const active = activePath === item.href;
             return (
-              <Link key={item.href} href={item.href} className={`nav-link${active ? " active" : ""}`} aria-current={active ? "page" : undefined}>
-                {item.icon ? <span aria-hidden="true">{item.icon}</span> : null}
-                {item.label}
+              <Link
+                key={item.href}
+                href={item.href}
+                className={`nav-link${active ? " active" : ""}`}
+                aria-current={active ? "page" : undefined}
+                title={item.label}
+              >
+                {item.icon ? <span className="nav-icon" aria-hidden="true">{item.icon}</span> : null}
+                <span className="nav-label-full">{item.label}</span>
+                <span className="nav-label-short">{item.shortLabel ?? item.label.split(" ").pop()}</span>
               </Link>
             );
           })}
         </nav>
-        <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
+        <div className="top-nav-actions">
           {actions}
           {actionLabel && actionHref ? (
-            <Link
-              href={actionHref}
-              className="press"
-              style={{
-                display: "inline-flex",
-                alignItems: "center",
-                gap: 8,
-                minHeight: 40,
-                padding: "10px 18px",
-                borderRadius: "var(--radius-full)",
-                fontWeight: 700,
-                fontSize: 14,
-                color: "var(--paper)",
-                background: "linear-gradient(135deg, var(--color-primary), var(--color-primary-strong))",
-                boxShadow: "var(--neu-raised-sm)",
-              }}
-            >
-              {actionLabel}
+            <Link href={actionHref} className="top-nav-cta press">
+              <span className="nav-cta-full">{actionLabel}</span>
+              <span className="nav-cta-short">Go</span>
             </Link>
           ) : null}
         </div>
       </header>
 
-      <Reveal
-        className="nm-surface hero-block"
-        style={{ marginBottom: "var(--space-lg)" }}
-      >
+      <section className="nm-surface hero-block hero-enter" style={{ marginBottom: "var(--space-lg)" }}>
         <span
           aria-hidden="true"
-          style={{
-            position: "absolute",
-            inset: "auto auto -40px -50px",
-            width: 220,
-            height: 220,
-            borderRadius: "50%",
-            background: accentTint[accent],
-            filter: "blur(8px)",
-            opacity: 0.35,
-            pointerEvents: "none",
-          }}
+          className="hero-glow"
+          style={{ background: accentTint[accent] }}
         />
         <div style={{ position: "relative", display: "grid", gap: 8 }}>
-          <RevealItem>
-            <span className="eyebrow">{eyebrow}</span>
-          </RevealItem>
-          <RevealItem>
-            <h1 className="font-serif-brand" style={{ margin: "4px 0 0", fontSize: "clamp(30px, 4.4vw, 52px)", lineHeight: 1.05, letterSpacing: "-0.02em" }}>
-              {title}
-            </h1>
-          </RevealItem>
-          <RevealItem>
-            <p className="section-copy" style={{ fontSize: "var(--font-size-md)" }}>{subtitle}</p>
-          </RevealItem>
+          <span className="eyebrow hero-enter-item" style={{ ["--i" as string]: 0 } as CSSProperties}>{eyebrow}</span>
+          <h1 className="font-serif-brand hero-enter-item" style={{ margin: "4px 0 0", fontSize: "clamp(26px, 4.4vw, 48px)", lineHeight: 1.05, letterSpacing: "-0.02em", ["--i" as string]: 1 } as CSSProperties}>
+            {title}
+          </h1>
+          <p className="section-copy hero-enter-item" style={{ fontSize: "var(--font-size-md)", ["--i" as string]: 2 } as CSSProperties}>{subtitle}</p>
         </div>
-      </Reveal>
+      </section>
 
       <div className="dashboard-grid stagger">{children}</div>
     </main>

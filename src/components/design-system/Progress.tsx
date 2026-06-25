@@ -2,7 +2,7 @@ export interface ProgressProps {
   label?: string;
   value: number;
   hint?: string;
-  tone?: "primary" | "success" | "warning" | "sky" | "coral" | "aub";
+  tone?: "primary" | "success" | "warning" | "sky" | "coral" | "aub" | "sage" | "honey";
 }
 
 function clamp(num: number): number {
@@ -16,6 +16,8 @@ const toneColor: Record<NonNullable<ProgressProps["tone"]>, string> = {
   sky: "var(--sky-deep)",
   coral: "var(--coral-deep)",
   aub: "var(--aub-deep)",
+  sage: "var(--sage-deep)",
+  honey: "var(--honey-deep)",
 };
 
 export function Progress({ label, value, hint, tone = "primary" }: ProgressProps) {
