@@ -1,26 +1,28 @@
 'use client'
 
 import { useEffect, useRef } from 'react'
-import { onAuthStateChanged, signOut } from 'firebase/auth'
+import { onAuthStateChanged } from 'firebase/auth'
 import { getFirebaseAuth } from '@/lib/firebase-client'
 import { backendFetch } from '@/lib/backend-client'
-import { AUTH_COOKIE, ROLE_COOKIE, normalizeRole } from '@/lib/auth'
+import {
+  AUTH_COOKIE,
+  ROLE_COOKIE,
+  clearClientAuthCookie,
+  normalizeRole,
+  readClientAuthCookie,
+  setClientAuthCookie,
+} from '@/lib/auth'
 import type { AppRole } from '@/types/app'
 
 interface SessionExchangeResponse {
   ok: boolean
   user?: { role?: string }
-  message?: string
 }
 
-function setClientCookie(name: string, value: string, maxAgeSeconds = 60 * 60 * 24 * 7) {
-  if (typeof document === 'undefined') return
-  document.cookie = `${name}=${encodeURIComponent(value)}; path=/; max-age=${maxAgeSeconds}; SameSite=Lax`
-}
-
-function clearClientCookie(name: string) {
-  if (typeof document === 'undefined') return
-  document.cookie = `${name}=; path=/; max-age=0; SameSite=Lax`
+function readPreferredRole(): AppRole | null {
+  if (typeof window === 'undefined') return null
+  const params = new URLSearchParams(window.location.search)
+  return normalizeRole(params.get('role'))
 }
 
 async function syncSession(idToken: string, preferredRole?: AppRole | null) {
@@ -33,9 +35,9 @@ async function syncSession(idToken: string, preferredRole?: AppRole | null) {
   })
 
   if (result.ok) {
-    setClientCookie(AUTH_COOKIE, '1')
-    const role = normalizeRole(result.user?.role ?? preferredRole ?? null)
-    if (role) setClientCookie(ROLE_COOKIE, role)
+    setClientAuthCookie(AUTH_COOKIE, '1')
+    const role = normalizeRole(result.user?.role ?? preferredRole ?? readClientAuthCookie(ROLE_COOKIE))
+    if (role) setClientAuthCookie(ROLE_COOKIE, role)
   }
 
   return result
@@ -47,14 +49,8 @@ async function clearSession() {
   } catch {
     // Best-effort logout when BFF is unavailable.
   }
-  clearClientCookie(AUTH_COOKIE)
-  clearClientCookie(ROLE_COOKIE)
-}
-
-function readPreferredRole(): AppRole | null {
-  if (typeof window === 'undefined') return null
-  const params = new URLSearchParams(window.location.search)
-  return normalizeRole(params.get('role'))
+  clearClientAuthCookie(AUTH_COOKIE)
+  clearClientAuthCookie(ROLE_COOKIE)
 }
 
 export function AuthSessionSync() {
@@ -70,11 +66,18 @@ export function AuthSessionSync() {
           await clearSession()
           return
         }
-        const idToken = await user.getIdToken()
-        await syncSession(idToken, readPreferredRole())
-      } catch {
-        await signOut(auth)
-        await clearSession()
+
+        // Keep middleware happy even if the BFF exchange is slow or fails.
+        setClientAuthCookie(AUTH_COOKIE, '1')
+
+        const cookieRole = normalizeRole(readClientAuthCookie(ROLE_COOKIE))
+        const preferredRole = readPreferredRole() ?? cookieRole
+
+        try {
+          await syncSession(await user.getIdToken(), preferredRole)
+        } catch {
+          if (preferredRole) setClientAuthCookie(ROLE_COOKIE, preferredRole)
+        }
       } finally {
         syncingRef.current = false
       }

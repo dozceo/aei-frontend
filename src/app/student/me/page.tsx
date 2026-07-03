@@ -7,11 +7,7 @@ import { useAuthUser } from '@/hooks/useAuthUser'
 import { useSession } from '@/hooks/useSession'
 import { getFirebaseAuth } from '@/lib/firebase-client'
 import { backendFetch } from '@/lib/backend-client'
-import { AUTH_COOKIE, ROLE_COOKIE } from '@/lib/auth'
-
-function clearClientCookie(name: string) {
-  document.cookie = `${name}=; path=/; max-age=0; SameSite=Lax`
-}
+import { AUTH_COOKIE, ROLE_COOKIE, clearClientAuthCookie } from '@/lib/auth'
 
 export default function StudentMePage() {
   const { user } = useAuthUser()
@@ -20,12 +16,12 @@ export default function StudentMePage() {
 
   async function handleSignOut() {
     try {
-      await backendFetch('/api/auth/session', { method: 'DELETE' })
+      await backendFetch('/api/auth/logout', { method: 'POST' })
     } catch {
       // Continue local sign-out even if BFF is down.
     }
-    clearClientCookie(AUTH_COOKIE)
-    clearClientCookie(ROLE_COOKIE)
+    clearClientAuthCookie(AUTH_COOKIE)
+    clearClientAuthCookie(ROLE_COOKIE)
     await signOut(getFirebaseAuth())
     router.replace('/login?role=student')
   }

@@ -20,12 +20,14 @@ import {
 } from '@/components/design-system'
 import { getFirebaseAuth, googleProvider } from '@/lib/firebase-client'
 import { backendFetch } from '@/lib/backend-client'
-import { AUTH_COOKIE, ROLE_COOKIE, getRoleHome, normalizeRole } from '@/lib/auth'
+import {
+  AUTH_COOKIE,
+  ROLE_COOKIE,
+  getRoleHome,
+  normalizeRole,
+  setClientAuthCookie,
+} from '@/lib/auth'
 import type { AppRole } from '@/types/app'
-
-function setClientCookie(name: string, value: string) {
-  document.cookie = `${name}=${encodeURIComponent(value)}; path=/; max-age=${604800}; SameSite=Lax`
-}
 
 export default function LoginPageClient() {
   const router = useRouter()
@@ -42,14 +44,17 @@ export default function LoginPageClient() {
   const redirect = searchParams.get('redirect') ?? getRoleHome(role)
 
   async function establishSession(idToken: string) {
-    const result = await backendFetch<{ ok: boolean; role?: AppRole }>('/api/auth/session', {
-      method: 'POST',
-      body: JSON.stringify({ idToken, role }),
-    })
+    const result = await backendFetch<{ ok: boolean; user?: { role?: string } }>(
+      '/api/auth/session',
+      {
+        method: 'POST',
+        body: JSON.stringify({ idToken, role }),
+      }
+    )
     if (result.ok) {
-      setClientCookie(AUTH_COOKIE, '1')
-      const resolvedRole = normalizeRole(result.role ?? role)
-      if (resolvedRole) setClientCookie(ROLE_COOKIE, resolvedRole)
+      setClientAuthCookie(AUTH_COOKIE, '1')
+      const resolvedRole = normalizeRole(result.user?.role ?? role)
+      if (resolvedRole) setClientAuthCookie(ROLE_COOKIE, resolvedRole)
       router.replace(redirect)
     }
   }
