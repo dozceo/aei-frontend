@@ -1,89 +1,29 @@
-import type { ReactNode } from "react";
-import type { Accent } from "./Card";
+import { cn } from '@/lib/cn'
 
 export interface StatCardProps {
-  label: string;
-  value: ReactNode;
-  hint?: string;
-  delta?: { value: string; direction: "up" | "down" | "flat" };
-  icon?: ReactNode;
-  accent?: Accent;
+  label: string
+  value: string | number
+  hint?: string
+  trend?: 'up' | 'down' | 'neutral'
+  className?: string
 }
 
-const accentDeep: Record<Accent, string> = {
-  sky: "var(--sky-deep)",
-  honey: "var(--honey-deep)",
-  sage: "var(--sage-deep)",
-  coral: "var(--coral-deep)",
-  aub: "var(--aub-deep)",
-};
+const trendColors = {
+  up: 'text-[var(--sage)]',
+  down: 'text-[var(--coral)]',
+  neutral: 'text-[var(--ink-muted)]',
+} as const
 
-const accentTint: Record<Accent, string> = {
-  sky: "var(--sky)",
-  honey: "var(--honey)",
-  sage: "var(--sage)",
-  coral: "var(--coral)",
-  aub: "var(--aub)",
-};
-
-const deltaColor = {
-  up: "var(--sage-deep)",
-  down: "var(--coral-deep)",
-  flat: "var(--ink-faint)",
-} as const;
-
-const deltaGlyph = { up: "↑", down: "↓", flat: "→" } as const;
-
-export function StatCard({ label, value, hint, delta, icon, accent = "aub" }: StatCardProps) {
+export function StatCard({ label, value, hint, trend = 'neutral', className }: StatCardProps) {
   return (
-    <article
-      className="nm-surface nm-hover"
-      style={{ padding: 18, borderRadius: "var(--radius-lg)", display: "grid", gap: 12 }}
-    >
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 }}>
-        <span
-          style={{
-            fontSize: "11px",
-            fontWeight: 700,
-            letterSpacing: "0.12em",
-            textTransform: "uppercase",
-            color: "var(--color-text-secondary)",
-          }}
-        >
-          {label}
-        </span>
-        {icon ? (
-          <span
-            aria-hidden="true"
-            style={{
-              display: "inline-grid",
-              placeItems: "center",
-              width: 36,
-              height: 36,
-              borderRadius: "var(--radius-md)",
-              background: accentTint[accent],
-              color: accentDeep[accent],
-              boxShadow: "var(--neu-raised-xs)",
-              fontSize: 18,
-            }}
-          >
-            {icon}
-          </span>
-        ) : null}
-      </div>
-      <div style={{ display: "flex", alignItems: "baseline", gap: 10, flexWrap: "wrap" }}>
-        <span className="stat-value" style={{ color: accentDeep[accent] }}>
-          {value}
-        </span>
-        {delta ? (
-          <span className="nums" style={{ fontSize: "13px", fontWeight: 700, color: deltaColor[delta.direction] }}>
-            {deltaGlyph[delta.direction]} {delta.value}
-          </span>
-        ) : null}
-      </div>
+    <div className={cn('surface animate-rise p-4', className)}>
+      <p className="text-sm font-medium text-[var(--ink-muted)]">{label}</p>
+      <p className="mt-1 font-serif text-2xl font-semibold tracking-tight text-[var(--ink)]">
+        {value}
+      </p>
       {hint ? (
-        <span style={{ fontSize: "var(--font-size-xs)", color: "var(--color-text-secondary)" }}>{hint}</span>
+        <p className={cn('mt-1 text-xs font-medium', trendColors[trend])}>{hint}</p>
       ) : null}
-    </article>
-  );
+    </div>
+  )
 }

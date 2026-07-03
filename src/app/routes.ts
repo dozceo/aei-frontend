@@ -1,45 +1,43 @@
-export type AppRole = "STUDENT" | "TEACHER" | "PARENT" | "ADMIN";
+import type { AppRole } from '@/types/app'
 
 export interface AppRoute {
-  path: string;
-  label: string;
-  requireAuth: boolean;
-  roles?: AppRole[];
+  path: string
+  label: string
+  roles?: AppRole[]
+  group?: string
 }
 
-export const appRoutes: AppRoute[] = [
-  { path: "/login", label: "Login", requireAuth: false },
-  { path: "/auth/signup", label: "Signup", requireAuth: false },
-  { path: "/auth/forgot-password", label: "Forgot Password", requireAuth: false },
-  { path: "/help", label: "Help", requireAuth: false },
-  { path: "/onboarding", label: "Onboarding", requireAuth: true },
-  { path: "/settings/profile", label: "Profile Settings", requireAuth: true },
-  { path: "/settings/preferences", label: "Preference Settings", requireAuth: true },
-  { path: "/support/ticket", label: "Support Tickets", requireAuth: true },
-  { path: "/billing/checkout", label: "Billing Checkout", requireAuth: true },
-  { path: "/billing/success", label: "Billing Success", requireAuth: true },
-  { path: "/billing/failed", label: "Billing Failed", requireAuth: true },
-  { path: "/admin", label: "Admin Console", requireAuth: true, roles: ["ADMIN"] },
-  { path: "/student/dashboard", label: "Student Dashboard", requireAuth: true, roles: ["STUDENT"] },
-  { path: "/student/loop", label: "Sankalp Loop", requireAuth: true, roles: ["STUDENT"] },
-  { path: "/student/mind", label: "Student Mind", requireAuth: true, roles: ["STUDENT"] },
-  { path: "/student/queries", label: "Student Queries", requireAuth: true, roles: ["STUDENT"] },
-  { path: "/student/insights", label: "Student Insights", requireAuth: true, roles: ["STUDENT"] },
-  { path: "/student/curriculum", label: "Student Curriculum", requireAuth: true, roles: ["STUDENT"] },
-  { path: "/student/assessments", label: "Student Assessments", requireAuth: true, roles: ["STUDENT"] },
-  { path: "/student/ai-companion", label: "Student AI Companion", requireAuth: true, roles: ["STUDENT"] },
-  { path: "/teacher/dashboard", label: "Teacher Dashboard", requireAuth: true, roles: ["TEACHER"] },
-  { path: "/teacher/students", label: "Teacher Students", requireAuth: true, roles: ["TEACHER"] },
-  { path: "/teacher/heatmap", label: "Teacher Heatmap", requireAuth: true, roles: ["TEACHER"] },
-  { path: "/teacher/attendance", label: "Teacher Attendance", requireAuth: true, roles: ["TEACHER"] },
-  { path: "/teacher/interventions", label: "Teacher Interventions", requireAuth: true, roles: ["TEACHER"] },
-  { path: "/parent/dashboard", label: "Parent Dashboard", requireAuth: true, roles: ["PARENT"] },
-  { path: "/parent/inbox", label: "Parent Inbox", requireAuth: true, roles: ["PARENT"] },
-];
+export const APP_ROUTES: AppRoute[] = [
+  { path: '/', label: 'Home' },
+  { path: '/login', label: 'Login' },
+  { path: '/student', label: 'Today', roles: ['STUDENT'], group: 'student' },
+  { path: '/student/quiz', label: 'Quiz', roles: ['STUDENT'], group: 'student' },
+  { path: '/student/brain', label: 'Brain', roles: ['STUDENT'], group: 'student' },
+  { path: '/student/play', label: 'Play', roles: ['STUDENT'], group: 'student' },
+  { path: '/student/me', label: 'Me', roles: ['STUDENT'], group: 'student' },
+  { path: '/teacher', label: 'Today', roles: ['TEACHER'], group: 'teacher' },
+  { path: '/teacher/students', label: 'Students', roles: ['TEACHER'], group: 'teacher' },
+  { path: '/teacher/topics', label: 'Topics', roles: ['TEACHER'], group: 'teacher' },
+  { path: '/teacher/chapters', label: 'Chapters', roles: ['TEACHER'], group: 'teacher' },
+  { path: '/teacher/schedule', label: 'Schedule', roles: ['TEACHER'], group: 'teacher' },
+  { path: '/parent', label: 'Summary', roles: ['PARENT'], group: 'parent' },
+  { path: '/parent/inbox', label: 'Inbox', roles: ['PARENT'], group: 'parent' },
+  { path: '/parent/reports', label: 'Reports', roles: ['PARENT'], group: 'parent' },
+  { path: '/admin', label: 'Overview', roles: ['ADMIN'], group: 'admin' },
+  { path: '/admin/participants', label: 'Participants', roles: ['ADMIN'], group: 'admin' },
+  { path: '/admin/ews', label: 'EWS', roles: ['ADMIN'], group: 'admin' },
+  { path: '/admin/attendance', label: 'Attendance', roles: ['ADMIN'], group: 'admin' },
+  { path: '/admin/exams', label: 'Exams', roles: ['ADMIN'], group: 'admin' },
+  { path: '/admin/queries', label: 'Queries', roles: ['ADMIN'], group: 'admin' },
+  { path: '/admin/recall', label: 'Recall', roles: ['ADMIN'], group: 'admin' },
+  { path: '/admin/brainmap', label: 'Brainmap', roles: ['ADMIN'], group: 'admin' },
+  { path: '/admin/analytics', label: 'Analytics', roles: ['ADMIN'], group: 'admin' },
+  { path: '/admin/settings', label: 'Settings', roles: ['ADMIN'], group: 'admin' },
+  { path: '/recall/[sessionId]', label: 'Recall Session' },
+  { path: '/query', label: 'Ask a Question', roles: ['STUDENT'] },
+  { path: '/project', label: 'Project' },
+]
 
-export const routeGroups = {
-  student: appRoutes.filter((route) => route.roles?.includes("STUDENT")),
-  teacher: appRoutes.filter((route) => route.roles?.includes("TEACHER")),
-  parent: appRoutes.filter((route) => route.roles?.includes("PARENT")),
-  admin: appRoutes.filter((route) => route.roles?.includes("ADMIN")),
-};
+export function routesForRole(role: AppRole): AppRoute[] {
+  return APP_ROUTES.filter((route) => !route.roles || route.roles.includes(role))
+}

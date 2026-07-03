@@ -1,13 +1,15 @@
-"use client";
-
-import { RoleShell } from "@/components/layout/RoleShell";
-import { AdminAttendancePortal } from "@/components/portals/admin/AdminPortalPanels";
-import { adminNav } from "@/lib/role-nav";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, EmptyState } from '@/components/design-system'
 
 export default function AdminAttendancePage() {
   return (
-    <RoleShell title="Attendance" subtitle="Daily division register" eyebrow="Admin" navItems={adminNav} activePath="/admin/attendance" accent="sky">
-      <AdminAttendancePortal />
-    </RoleShell>
-  );
+    <Card>
+      <CardHeader>
+        <CardTitle>Attendance</CardTitle>
+        <CardDescription>Daily loop completion and attendance records.</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <EmptyState title="No attendance data" description="Attendance syncs when students complete loops." />
+      </CardContent>
+    </Card>
+  )
 }

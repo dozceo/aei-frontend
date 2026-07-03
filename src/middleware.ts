@@ -1,57 +1,54 @@
-import { NextResponse, type NextRequest } from "next/server";
-import { AUTH_COOKIE, getRoleHome, isAuthenticatedValue, normalizeRole, ROLE_COOKIE } from "@/lib/auth";
-import { getRouteConfig, normalizePath } from "@/lib/route-auth";
+import { NextResponse } from 'next/server'
+import type { NextRequest } from 'next/server'
+import { AUTH_COOKIE, ROLE_COOKIE, getRoleHome, normalizeRole } from '@/lib/auth'
+import { isPublicRoute, matchRouteAuth } from '@/lib/route-auth'
 
-function redirectTo(request: NextRequest, pathname: string, searchParams?: Record<string, string>): NextResponse {
-  const redirectUrl = request.nextUrl.clone();
-  redirectUrl.pathname = pathname;
-  redirectUrl.search = "";
-  if (searchParams) {
-    Object.entries(searchParams).forEach(([key, value]) => {
-      redirectUrl.searchParams.set(key, value);
-    });
+function legacyRedirect(request: NextRequest): NextResponse | null {
+  const { searchParams } = request.nextUrl
+  if (searchParams.has('me')) {
+    return NextResponse.redirect(new URL('/student', request.url))
   }
-  return NextResponse.redirect(redirectUrl);
+  if (searchParams.has('teacher')) {
+    return NextResponse.redirect(new URL('/teacher', request.url))
+  }
+  if (searchParams.has('parent')) {
+    return NextResponse.redirect(new URL('/parent', request.url))
+  }
+  if (searchParams.has('admin')) {
+    return NextResponse.redirect(new URL('/admin', request.url))
+  }
+  return null
 }
 
-export function middleware(request: NextRequest): NextResponse {
-  const pathname = normalizePath(request.nextUrl.pathname);
-  const route = getRouteConfig(pathname);
-  const authCookieValue = request.cookies.get(AUTH_COOKIE)?.value;
-  const roleCookieValue = request.cookies.get(ROLE_COOKIE)?.value;
-  const isAuthenticated = isAuthenticatedValue(authCookieValue);
-  const role = normalizeRole(roleCookieValue);
+export function middleware(request: NextRequest) {
+  const legacy = legacyRedirect(request)
+  if (legacy) return legacy
 
-  const authEntryPaths = ["/login", "/auth/signup", "/auth/forgot-password", "/"];
-  if (authEntryPaths.includes(pathname) && isAuthenticated) {
-    if (role) {
-      return redirectTo(request, getRoleHome(role));
-    }
-    if (pathname !== "/onboarding") {
-      return redirectTo(request, "/onboarding");
-    }
+  const { pathname } = request.nextUrl
+
+  if (isPublicRoute(pathname)) {
+    return NextResponse.next()
   }
 
-  if (!route) {
-    return NextResponse.next();
+  const session = request.cookies.get(AUTH_COOKIE)?.value
+  const role = normalizeRole(request.cookies.get(ROLE_COOKIE)?.value)
+
+  if (!session) {
+    const loginUrl = new URL('/login', request.url)
+    loginUrl.searchParams.set('redirect', pathname)
+    return NextResponse.redirect(loginUrl)
   }
 
-  if (route.requireAuth && !isAuthenticated) {
-    return redirectTo(request, "/login", { next: pathname });
+  if (!matchRouteAuth(pathname, role)) {
+    const destination = role ? getRoleHome(role) : '/login'
+    return NextResponse.redirect(new URL(destination, request.url))
   }
 
-  if (route.roles && route.roles.length > 0) {
-    if (!role || !route.roles.includes(role)) {
-      if (isAuthenticated) {
-        return redirectTo(request, getRoleHome(role), { denied: pathname });
-      }
-      return redirectTo(request, "/login", { next: pathname });
-    }
-  }
-
-  return NextResponse.next();
+  return NextResponse.next()
 }
 
 export const config = {
-  matcher: ["/((?!api|_next/static|_next/image|favicon.ico|.*\\..*).*)"],
-};
+  matcher: [
+    '/((?!_next/static|_next/image|favicon.ico|manifest.json|icons/|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+  ],
+}

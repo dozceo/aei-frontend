@@ -1,78 +1,70 @@
-import { getCurrentIdToken } from "@/lib/auth-client";
+import { getFirebaseAuth } from '@/lib/firebase-client'
 
-const DEFAULT_TIMEOUT_MS = 15_000;
+const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL ?? ''
 
-export interface BackendRequestOptions extends RequestInit {
-  requireAuth?: boolean;
-  timeoutMs?: number;
+export class ApiError extends Error {
+  constructor(
+    public status: number,
+    message: string,
+    public body?: unknown
+  ) {
+    super(message)
+    this.name = 'ApiError'
+  }
 }
 
-function getBackendBaseUrl(): string {
-  const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
-
-  if (!baseUrl) {
-    throw new Error("NEXT_PUBLIC_API_BASE_URL is not configured.");
-  }
-
-  return baseUrl.replace(/\/$/, "");
+function resolveUrl(path: string): string {
+  if (path.startsWith('http://') || path.startsWith('https://')) return path
+  const base = API_BASE.replace(/\/$/, '')
+  const normalized = path.startsWith('/') ? path : `/${path}`
+  return `${base}${normalized}`
 }
 
-async function buildHeaders(initHeaders: HeadersInit | undefined, requireAuth: boolean): Promise<Headers> {
-  const headers = new Headers(initHeaders);
-
-  if (!headers.has("Content-Type")) {
-    headers.set("Content-Type", "application/json");
+async function authHeaders(init: RequestInit): Promise<Headers> {
+  const headers = new Headers(init.headers)
+  if (!headers.has('Content-Type') && init.body && typeof init.body === 'string') {
+    headers.set('Content-Type', 'application/json')
   }
-
-  if (requireAuth) {
-    const token = await getCurrentIdToken();
-
-    if (!token) {
-      throw new Error("No Firebase user token available. Please sign in again.");
+  if (!headers.has('Authorization') && typeof window !== 'undefined') {
+    try {
+      const user = getFirebaseAuth().currentUser
+      if (user) {
+        headers.set('Authorization', `Bearer ${await user.getIdToken()}`)
+      }
+    } catch {
+      // ignore — cookie session may still work on same origin
     }
+  }
+  return headers
+}
 
-    headers.set("Authorization", `Bearer ${token}`);
+export async function backendFetch<T>(
+  path: string,
+  init: RequestInit = {}
+): Promise<T> {
+  const headers = await authHeaders(init)
+
+  const response = await fetch(resolveUrl(path), {
+    ...init,
+    credentials: 'include',
+    headers,
+  })
+
+  const contentType = response.headers.get('content-type') ?? ''
+  const isJson = contentType.includes('application/json')
+  const payload = isJson ? await response.json().catch(() => null) : await response.text()
+
+  if (!response.ok) {
+    const message =
+      typeof payload === 'object' && payload && 'message' in payload
+        ? String((payload as { message: unknown }).message)
+        : response.statusText || 'Request failed'
+    throw new ApiError(response.status, message, payload)
   }
 
-  return headers;
+  return payload as T
 }
 
-export async function backendRequest<T>(path: string, options: BackendRequestOptions = {}): Promise<T> {
-  const { requireAuth = true, timeoutMs = DEFAULT_TIMEOUT_MS, ...requestInit } = options;
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), timeoutMs);
-
-  try {
-    const headers = await buildHeaders(requestInit.headers, requireAuth);
-    const response = await fetch(`${getBackendBaseUrl()}${path.startsWith("/") ? path : `/${path}`}`, {
-      ...requestInit,
-      headers,
-      signal: controller.signal,
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(errorText || `Backend request failed with status ${response.status}`);
-    }
-
-    if (response.status === 204) {
-      return undefined as T;
-    }
-
-    return (await response.json()) as T;
-  } finally {
-    clearTimeout(timeout);
-  }
-}
-
-export function backendGet<T>(path: string, options: Omit<BackendRequestOptions, "method"> = {}): Promise<T> {
-  return backendRequest<T>(path, { ...options, method: "GET" });
-}
-
-export function backendPost<T>(path: string, body?: unknown, options: Omit<BackendRequestOptions, "method" | "body"> = {}): Promise<T> {
-  return backendRequest<T>(path, {
-    ...options,
-    method: "POST",
-    body: body === undefined ? undefined : JSON.stringify(body),
-  });
+export function getApiBaseUrl(): string {
+  return API_BASE
 }

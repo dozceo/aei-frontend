@@ -1,6 +1,11 @@
-import { getApp, getApps, initializeApp } from "firebase/app";
-import { getAuth } from "firebase/auth";
-import { getFirestore } from "firebase/firestore";
+'use client'
+
+import { getApp, getApps, initializeApp, type FirebaseApp } from 'firebase/app'
+import {
+  getAuth,
+  GoogleAuthProvider,
+  type Auth,
+} from 'firebase/auth'
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -9,24 +14,20 @@ const firebaseConfig = {
   storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
   messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
-};
+}
 
-const requiredConfig = [
-  firebaseConfig.apiKey,
-  firebaseConfig.authDomain,
-  firebaseConfig.projectId,
-  firebaseConfig.storageBucket,
-  firebaseConfig.messagingSenderId,
-  firebaseConfig.appId,
-];
+function getFirebaseApp(): FirebaseApp {
+  if (getApps().length > 0) return getApp()
+  return initializeApp(firebaseConfig)
+}
 
-export const isFirebaseConfigured = requiredConfig.every((value) => typeof value === "string" && value.length > 0);
+let authInstance: Auth | null = null
 
-const app = isFirebaseConfigured ? (getApps().length > 0 ? getApp() : initializeApp(firebaseConfig)) : null;
+export function getFirebaseAuth(): Auth {
+  if (!authInstance) {
+    authInstance = getAuth(getFirebaseApp())
+  }
+  return authInstance
+}
 
-const firestoreDatabaseId =
-  process.env.NEXT_PUBLIC_FIRESTORE_DATABASE_ID?.trim() || "zero2dev";
-
-export const db = app ? getFirestore(app, firestoreDatabaseId) : null;
-export const firestoreDatabaseName = firestoreDatabaseId;
-export const firebaseAuth = app ? getAuth(app) : null;
+export const googleProvider = new GoogleAuthProvider()

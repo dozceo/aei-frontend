@@ -15,8 +15,10 @@ const config: Config = {
         warning: 'var(--color-warning)',
         error: 'var(--color-error)',
       },
-      fonts: {
-        sans: ['var(--font-sans)'],
+      fontFamily: {
+        sans: ['var(--font-sans)', 'system-ui', 'sans-serif'],
+        serif: ['var(--font-serif)', 'Georgia', 'serif'],
+        mono: ['var(--font-mono)', 'ui-monospace', 'monospace'],
       },
     },
   },

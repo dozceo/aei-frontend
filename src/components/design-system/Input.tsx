@@ -1,46 +1,50 @@
-import type { InputHTMLAttributes } from "react";
-import { cn } from "@/lib/cn";
+import { forwardRef, type InputHTMLAttributes } from 'react'
+import { cn } from '@/lib/cn'
 
 export interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
-  label?: string;
-  hint?: string;
+  label?: string
+  error?: string
+  hint?: string
 }
 
-export function Input({ label, hint, className, id, style, ...rest }: InputProps) {
-  const inputId = id ?? rest.name;
+export const Input = forwardRef<HTMLInputElement, InputProps>(
+  ({ className, label, error, hint, id, ...props }, ref) => {
+    const inputId = id ?? (label ? label.toLowerCase().replace(/\s+/g, '-') : undefined)
 
-  return (
-    <div style={{ display: "grid", gap: 8 }}>
-      {label ? (
-        <label
-          htmlFor={inputId}
-          style={{
-            fontWeight: 700,
-            fontSize: "11px",
-            letterSpacing: "0.12em",
-            textTransform: "uppercase",
-            color: "var(--color-text-secondary)",
-          }}
-        >
-          {label}
-        </label>
-      ) : null}
-      <input
-        id={inputId}
-        className={cn("nm-inset", className)}
-        style={{
-          padding: "12px 16px",
-          borderRadius: "var(--radius-md)",
-          fontSize: "var(--font-size-sm)",
-          color: "var(--color-text-primary)",
-          background: "var(--paper)",
-          outline: "none",
-          minHeight: 44,
-          ...style,
-        }}
-        {...rest}
-      />
-      {hint ? <span style={{ color: "var(--color-text-secondary)", fontSize: "var(--font-size-xs)" }}>{hint}</span> : null}
-    </div>
-  );
-}
+    return (
+      <div className="w-full">
+        {label ? (
+          <label htmlFor={inputId} className="field-label">
+            {label}
+          </label>
+        ) : null}
+        <input
+          ref={ref}
+          id={inputId}
+          className={cn(
+            'field-input',
+            error && 'border-[var(--coral)] focus:border-[var(--coral)] focus:ring-[var(--coral)]/20',
+            className
+          )}
+          aria-invalid={error ? true : undefined}
+          aria-describedby={
+            error ? `${inputId}-error` : hint ? `${inputId}-hint` : undefined
+          }
+          {...props}
+        />
+        {hint && !error ? (
+          <p id={`${inputId}-hint`} className="mt-1 text-xs text-[var(--ink-muted)]">
+            {hint}
+          </p>
+        ) : null}
+        {error ? (
+          <p id={`${inputId}-error`} className="field-error" role="alert">
+            {error}
+          </p>
+        ) : null}
+      </div>
+    )
+  }
+)
+
+Input.displayName = 'Input'

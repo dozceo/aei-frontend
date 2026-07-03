@@ -2,4 +2,34 @@
 @tailwind components;
 @tailwind utilities;
 
-@import "../styles/design-system.css";
+@import '../styles/design-system.css';
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
+  }
+
+  ::selection {
+    background-color: var(--primary-muted);
+    color: var(--primary);
+  }
+}
+
+@layer utilities {
+  .font-serif {
+    font-family: var(--font-serif), ui-serif, Georgia, serif;
+  }
+
+  .font-mono {
+    font-family: var(--font-mono), ui-monospace, monospace;
+  }
+
+  .pb-safe-nav {
+    padding-bottom: calc(var(--tap-target) + 1.5rem + env(safe-area-inset-bottom, 0px));
+  }
+}

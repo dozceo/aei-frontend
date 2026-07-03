@@ -1,70 +1,85 @@
-"use client";
+'use client'
 
-import { Badge, Button, Card } from "@/components/design-system";
-import { DatabaseState } from "@/components/layout/DatabaseState";
-import { RoleShell } from "@/components/layout/RoleShell";
-import { useParentPageContent } from "@/hooks/useRolePageContent";
-import { getParentPagePath, parentFallbackNav, type ParentInboxDoc } from "@/lib/role-content";
-import { getNotificationTone } from "@/lib/tone-utils";
+import { useQuery } from '@tanstack/react-query'
+import {
+  Badge,
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+  EmptyState,
+  ErrorState,
+  Skeleton,
+} from '@/components/design-system'
+import { backendFetch } from '@/lib/backend-client'
 
-const pageKey = "inbox" as const;
+interface NotificationItem {
+  id: string
+  title: string
+  body?: string
+  read?: boolean
+  createdAt?: string
+}
+
+interface NotificationsResponse {
+  notifications?: NotificationItem[]
+  items?: NotificationItem[]
+}
 
 export default function ParentInboxPage() {
-  const { data, loading, error, roleId } = useParentPageContent<ParentInboxDoc>(pageKey);
-  const pathHint = getParentPagePath(roleId, pageKey);
+  const query = useQuery({
+    queryKey: ['notifications'],
+    queryFn: () => backendFetch<NotificationsResponse>('/api/notifications'),
+  })
+
+  const items = query.data?.notifications ?? query.data?.items ?? []
 
   return (
-    <RoleShell
-      title={data?.hero.title ?? "Parent inbox"}
-      subtitle={data?.hero.subtitle ?? "Database-backed parent messages"}
-      eyebrow={data?.hero.eyebrow ?? "Database Content"}
-      navItems={data?.navItems ?? parentFallbackNav}
-      activePath="/parent/inbox"
-      actionLabel={data?.hero.actionLabel}
-      actionHref={data?.hero.actionHref}
-      brandLabel={data?.brandLabel ?? "SANKALP AEI"}
-    >
-      {!data ? (
-        <DatabaseState loading={loading} error={error} pathHint={pathHint} />
-      ) : (
-        <Card title={data.sections.messagesTitle} subtitle={data.sections.messagesSubtitle} style={{ gridColumn: "span 12" }}>
-          <ul className="list-clean">
-            {data.messages.map((notification) => (
+    <Card>
+      <CardHeader>
+        <CardTitle>Inbox</CardTitle>
+        <CardDescription>Alerts and updates from school.</CardDescription>
+      </CardHeader>
+      <CardContent>
+        {query.isLoading ? (
+          <div className="space-y-3">
+            <Skeleton className="h-16 w-full" />
+            <Skeleton className="h-16 w-full" />
+          </div>
+        ) : null}
+
+        {query.isError ? (
+          <ErrorState
+            title="Inbox unavailable"
+            message={query.error instanceof Error ? query.error.message : 'Try again.'}
+            onRetry={() => query.refetch()}
+          />
+        ) : null}
+
+        {!query.isLoading && !query.isError && items.length === 0 ? (
+          <EmptyState title="All caught up" description="No new notifications right now." />
+        ) : null}
+
+        {!query.isLoading && !query.isError && items.length > 0 ? (
+          <ul className="space-y-3">
+            {items.map((item) => (
               <li
-                key={notification.id}
-                className="nm-surface-soft"
-                style={{
-                  borderRadius: "var(--radius-sm)",
-                  padding: 14,
-                  display: "grid",
-                  gridTemplateColumns: "1fr auto",
-                  alignItems: "start",
-                  gap: 12,
-                }}
+                key={item.id}
+                className="rounded-[var(--radius-md)] border border-[var(--border)] p-3"
               >
-                <div>
-                  <div className="chip-row" style={{ marginBottom: 8 }}>
-                    <Badge tone={getNotificationTone(notification.type)}>{notification.type}</Badge>
-                    <Badge tone={notification.read ? "neutral" : "primary"}>{notification.statusLabel}</Badge>
-                  </div>
-                  <strong style={{ fontSize: "var(--font-size-md)" }}>{notification.title}</strong>
-                  <p className="section-copy" style={{ marginTop: 6 }}>
-                    {notification.message}
-                  </p>
+                <div className="flex items-start justify-between gap-2">
+                  <p className="text-sm font-medium text-[var(--ink)]">{item.title}</p>
+                  {!item.read ? <Badge variant="sky">New</Badge> : null}
                 </div>
-                <div style={{ display: "grid", gap: 8, justifyItems: "end" }}>
-                  <span className="muted" style={{ fontSize: "var(--font-size-xs)" }}>
-                    {notification.timestamp}
-                  </span>
-                  <Button variant="secondary" size="sm">
-                    {notification.openLabel}
-                  </Button>
-                </div>
+                {item.body ? (
+                  <p className="mt-1 text-sm text-[var(--ink-muted)]">{item.body}</p>
+                ) : null}
               </li>
             ))}
           </ul>
-        </Card>
-      )}
-    </RoleShell>
-  );
+        ) : null}
+      </CardContent>
+    </Card>
+  )
 }

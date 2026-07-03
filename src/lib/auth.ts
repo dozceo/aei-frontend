@@ -1,32 +1,48 @@
-import type { AppRole } from "@/app/routes";
+import type { AppRole } from '@/types/app'
 
-export const AUTH_COOKIE = "aei-auth";
-export const ROLE_COOKIE = "aei-role";
-export const AUTH_COOKIE_MAX_AGE_SECONDS = 60 * 60 * 24 * 30;
+export const AUTH_COOKIE = 'sankalp_session'
+export const ROLE_COOKIE = 'sankalp_role'
 
-const roleHomeMap: Record<AppRole, string> = {
-  STUDENT: "/student/dashboard",
-  TEACHER: "/teacher/dashboard",
-  PARENT: "/parent/dashboard",
-  ADMIN: "/admin",
-};
-
-export function normalizeRole(value: string | null | undefined): AppRole | null {
-  if (value === "STUDENT" || value === "TEACHER" || value === "PARENT" || value === "ADMIN") {
-    return value;
-  }
-
-  return null;
+const ROLE_ALIASES: Record<string, AppRole> = {
+  student: 'STUDENT',
+  STUDENT: 'STUDENT',
+  teacher: 'TEACHER',
+  class_teacher: 'TEACHER',
+  hod: 'TEACHER',
+  principal: 'TEACHER',
+  TEACHER: 'TEACHER',
+  parent: 'PARENT',
+  PARENT: 'PARENT',
+  admin: 'ADMIN',
+  school_admin: 'ADMIN',
+  super_admin: 'ADMIN',
+  ADMIN: 'ADMIN',
 }
 
-export function getRoleHome(role: AppRole | null): string {
-  if (!role) {
-    return "/onboarding";
-  }
-
-  return roleHomeMap[role];
+export function normalizeRole(raw: string | undefined | null): AppRole | null {
+  if (!raw) return null
+  return ROLE_ALIASES[raw.trim()] ?? null
 }
 
-export function isAuthenticatedValue(value: string | null | undefined): boolean {
-  return value === "1";
+export function getRoleHome(role: AppRole): string {
+  switch (role) {
+    case 'STUDENT':
+      return '/student'
+    case 'TEACHER':
+      return '/teacher'
+    case 'PARENT':
+      return '/parent'
+    case 'ADMIN':
+      return '/admin'
+    default:
+      return '/'
+  }
+}
+
+export function roleFromPath(pathname: string): AppRole | null {
+  if (pathname.startsWith('/student')) return 'STUDENT'
+  if (pathname.startsWith('/teacher')) return 'TEACHER'
+  if (pathname.startsWith('/parent')) return 'PARENT'
+  if (pathname.startsWith('/admin')) return 'ADMIN'
+  return null
 }

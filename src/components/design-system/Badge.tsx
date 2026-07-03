@@ -1,43 +1,32 @@
-import type { ReactNode } from "react";
+import { cva, type VariantProps } from 'class-variance-authority'
+import { cn } from '@/lib/cn'
 
-type BadgeTone = "primary" | "neutral" | "success" | "warning" | "error" | "sky" | "honey" | "sage" | "coral" | "aub";
+const badgeVariants = cva(
+  'inline-flex items-center rounded-[var(--radius-full)] px-2.5 py-0.5 text-xs font-medium',
+  {
+    variants: {
+      variant: {
+        default: 'bg-[var(--primary-muted)] text-[var(--primary)]',
+        secondary: 'bg-[var(--paper-sunken)] text-[var(--ink-muted)]',
+        sky: 'bg-[var(--sky-bg)] text-[var(--sky-foreground)]',
+        honey: 'bg-[var(--honey-bg)] text-[var(--honey-foreground)]',
+        sage: 'bg-[var(--sage-bg)] text-[var(--sage-foreground)]',
+        coral: 'bg-[var(--coral-bg)] text-[var(--coral-foreground)]',
+        outline: 'border border-[var(--border-strong)] bg-transparent text-[var(--ink)]',
+      },
+    },
+    defaultVariants: {
+      variant: 'default',
+    },
+  }
+)
 
-const toneColor: Record<BadgeTone, { fg: string; bg: string }> = {
-  primary: { fg: "var(--color-primary)", bg: "color-mix(in srgb, var(--color-primary) 14%, transparent)" },
-  neutral: { fg: "var(--color-text-secondary)", bg: "color-mix(in srgb, var(--ink-faint) 16%, transparent)" },
-  success: { fg: "var(--sage-deep)", bg: "color-mix(in srgb, var(--sage-deep) 16%, transparent)" },
-  warning: { fg: "var(--honey-deep)", bg: "color-mix(in srgb, var(--honey-deep) 18%, transparent)" },
-  error: { fg: "var(--coral-deep)", bg: "color-mix(in srgb, var(--coral-deep) 16%, transparent)" },
-  sky: { fg: "var(--sky-deep)", bg: "color-mix(in srgb, var(--sky-deep) 16%, transparent)" },
-  honey: { fg: "var(--honey-deep)", bg: "color-mix(in srgb, var(--honey-deep) 18%, transparent)" },
-  sage: { fg: "var(--sage-deep)", bg: "color-mix(in srgb, var(--sage-deep) 16%, transparent)" },
-  coral: { fg: "var(--coral-deep)", bg: "color-mix(in srgb, var(--coral-deep) 16%, transparent)" },
-  aub: { fg: "var(--aub-deep)", bg: "color-mix(in srgb, var(--aub-deep) 16%, transparent)" },
-};
+export interface BadgeProps
+  extends React.HTMLAttributes<HTMLSpanElement>,
+    VariantProps<typeof badgeVariants> {}
 
-export function Badge({ tone = "neutral", dot = false, children }: { tone?: BadgeTone; dot?: boolean; children: ReactNode }) {
-  const c = toneColor[tone];
-  return (
-    <span
-      style={{
-        display: "inline-flex",
-        alignItems: "center",
-        gap: 6,
-        color: c.fg,
-        background: c.bg,
-        padding: "4px 11px",
-        borderRadius: "var(--radius-full)",
-        fontSize: "11px",
-        fontWeight: 700,
-        letterSpacing: "0.05em",
-        textTransform: "uppercase",
-        lineHeight: 1.5,
-      }}
-    >
-      {dot ? (
-        <span aria-hidden="true" style={{ width: 6, height: 6, borderRadius: 9999, background: "currentColor" }} />
-      ) : null}
-      {children}
-    </span>
-  );
+export function Badge({ className, variant, ...props }: BadgeProps) {
+  return <span className={cn(badgeVariants({ variant }), className)} {...props} />
 }
+
+export { badgeVariants }
