@@ -6,6 +6,7 @@ import {
   GoogleAuthProvider,
   type Auth,
 } from 'firebase/auth'
+import { getFirestore, type Firestore } from 'firebase/firestore'
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -16,18 +17,30 @@ const firebaseConfig = {
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
 }
 
+export const FIRESTORE_DATABASE_ID =
+  process.env.NEXT_PUBLIC_FIRESTORE_DATABASE_ID?.trim() || 'zero2dev'
+
 function getFirebaseApp(): FirebaseApp {
   if (getApps().length > 0) return getApp()
   return initializeApp(firebaseConfig)
 }
 
 let authInstance: Auth | null = null
+let firestoreInstance: Firestore | null = null
 
 export function getFirebaseAuth(): Auth {
   if (!authInstance) {
     authInstance = getAuth(getFirebaseApp())
   }
   return authInstance
+}
+
+/** Named Firestore database — same `zero2dev` instance as 02dev production. */
+export function getFirestoreDb(): Firestore {
+  if (!firestoreInstance) {
+    firestoreInstance = getFirestore(getFirebaseApp(), FIRESTORE_DATABASE_ID)
+  }
+  return firestoreInstance
 }
 
 export const googleProvider = new GoogleAuthProvider()

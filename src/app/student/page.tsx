@@ -1,13 +1,11 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle, StatCard } from '@/components/design-system'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/design-system'
 import { SankalpLoopPanel } from '@/components/portals/student/SankalpLoopPanel'
+import { StudentTodayStats } from '@/components/portals/student/StudentTodayStats'
 
 export default function StudentTodayPage() {
   return (
     <div className="space-y-4">
-      <div className="grid grid-cols-2 gap-3">
-        <StatCard label="Streak" value="—" hint="Complete today's loop" />
-        <StatCard label="Attendance" value="—" hint="Synced via BFF" />
-      </div>
+      <StudentTodayStats />
 
       <Card className="animate-rise-delay-1 border-[var(--primary-muted)] bg-[var(--primary-muted)]/30">
         <CardHeader>
