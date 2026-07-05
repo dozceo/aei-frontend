@@ -1,6 +1,6 @@
 {
   "name": "sankalp-frontend",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Sankalp - Student Learning Analytics & Parent Engagement Platform (Frontend)",
   "private": true,
   "scripts": {
