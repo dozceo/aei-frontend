@@ -10,7 +10,7 @@ export default function TeacherTodayPage() {
       </div>
       <Card>
         <CardHeader>
-          <CardTitle>Today's cohort</CardTitle>
+          <CardTitle>Today&rsquo;s cohort</CardTitle>
           <CardDescription>Mastery heatmap from recent student activity.</CardDescription>
         </CardHeader>
         <CardContent>
