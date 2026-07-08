@@ -1,0 +1,145 @@
+name: Frontend CI/CD
+
+on:
+  push:
+    branches: [main, staging, dev]
+  pull_request:
+    branches: [main, staging, dev]
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: Environment to deploy
+        type: choice
+        required: true
+        options: [dev, staging, production]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: frontend-deploy-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  NODE_VERSION: '20'
+
+jobs:
+  quality:
+    name: Lint, type-check, test, build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node ${{ env.NODE_VERSION }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Type-check
+        run: npm run type-check
+
+      - name: Test
+        run: npm test -- --ci
+
+      # Structural build check only (no real Firebase config needed to confirm
+      # the app compiles). The deploy job below rebuilds with the real
+      # per-environment values so they get baked into the static output.
+      - name: Build (sanity check)
+        run: npm run build
+
+  deploy:
+    name: Deploy to Firebase
+    needs: quality
+    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    # Push: branch decides the environment. Manual run: use the chosen input.
+    environment: ${{ github.event_name == 'workflow_dispatch' && inputs.environment || (github.ref_name == 'main' && 'production' || (github.ref_name == 'staging' && 'staging' || 'dev')) }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node ${{ env.NODE_VERSION }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build for ${{ vars.NEXT_PUBLIC_ENV }}
+        run: npm run build
+        env:
+          NEXT_PUBLIC_FIREBASE_API_KEY: ${{ vars.NEXT_PUBLIC_FIREBASE_API_KEY }}
+          NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: ${{ vars.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN }}
+          NEXT_PUBLIC_FIREBASE_PROJECT_ID: ${{ vars.NEXT_PUBLIC_FIREBASE_PROJECT_ID }}
+          NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET: ${{ vars.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET }}
+          NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID: ${{ vars.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID }}
+          NEXT_PUBLIC_FIREBASE_APP_ID: ${{ vars.NEXT_PUBLIC_FIREBASE_APP_ID }}
+          NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID: ${{ vars.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID }}
+          NEXT_PUBLIC_FIRESTORE_DATABASE_ID: ${{ vars.NEXT_PUBLIC_FIRESTORE_DATABASE_ID }}
+          NEXT_PUBLIC_API_BASE_URL: ${{ vars.NEXT_PUBLIC_API_BASE_URL }}
+          NEXT_PUBLIC_ML_SERVICE_URL: ${{ vars.NEXT_PUBLIC_ML_SERVICE_URL }}
+          NEXT_PUBLIC_ENV: ${{ vars.NEXT_PUBLIC_ENV }}
+          NEXT_PUBLIC_STUDENT_ID: ${{ vars.NEXT_PUBLIC_STUDENT_ID }}
+          NEXT_PUBLIC_TEACHER_ID: ${{ vars.NEXT_PUBLIC_TEACHER_ID }}
+          NEXT_PUBLIC_PARENT_ID: ${{ vars.NEXT_PUBLIC_PARENT_ID }}
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+
+      - name: Resolve Firebase deploy targets
+        id: targets
+        run: |
+          # Deploy only the services this repo actually declares in firebase.json,
+          # so an unconfigured service (e.g. functions, storage) never hard-fails the pipeline.
+          TARGETS=""
+          add() { TARGETS="${TARGETS:+$TARGETS,}$1"; }
+
+          jq -e '.hosting' firebase.json >/dev/null 2>&1 && add hosting
+          jq -e '.functions' firebase.json >/dev/null 2>&1 && add functions
+
+          if jq -e '.firestore.rules' firebase.json >/dev/null 2>&1; then
+            RULES_FILE=$(jq -r '.firestore.rules' firebase.json)
+            if [ -f "$RULES_FILE" ]; then
+              add firestore
+            else
+              echo "::error::firestore.rules path '$RULES_FILE' from firebase.json does not exist in this checkout"
+              exit 1
+            fi
+          fi
+
+          if jq -e '.storage.rules' firebase.json >/dev/null 2>&1; then
+            RULES_FILE=$(jq -r '.storage.rules' firebase.json)
+            if [ -f "$RULES_FILE" ]; then
+              add storage
+            else
+              echo "::error::storage.rules path '$RULES_FILE' from firebase.json does not exist in this checkout"
+              exit 1
+            fi
+          fi
+
+          if [ -z "$TARGETS" ]; then
+            echo "::error::No deployable Firebase targets found in firebase.json"
+            exit 1
+          fi
+
+          echo "Deploying targets: $TARGETS"
+          echo "targets=$TARGETS" >> "$GITHUB_OUTPUT"
+
+      - name: Deploy to Firebase project ${{ vars.FIREBASE_PROJECT_ID }}
+        run: |
+          npx firebase-tools@13 deploy \
+            --only "${{ steps.targets.outputs.targets }}" \
+            --project "${{ vars.FIREBASE_PROJECT_ID }}" \
+            --non-interactive

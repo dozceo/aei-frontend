@@ -14,7 +14,7 @@ export default function ParentSummaryPage() {
         </CardHeader>
         <CardContent>
           <p className="text-sm text-[var(--ink-muted)]">
-            Summaries will populate once your child's account is linked and active.
+            Summaries will populate once your child&rsquo;s account is linked and active.
           </p>
         </CardContent>
       </Card>

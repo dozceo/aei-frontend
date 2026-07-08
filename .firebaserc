@@ -1,6 +1,9 @@
 {
   "projects": {
-    "default": "sankalp-prerollout"
+    "default": "sankalp-prerollout",
+    "dev": "sankalp-prerollout",
+    "staging": "sankalp-prerollout",
+    "production": "sankalp-prerollout"
   },
   "targets": {},
   "etags": {}

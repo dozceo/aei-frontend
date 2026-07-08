@@ -112,7 +112,7 @@ export function BrainPanel() {
         <Card>
           <CardHeader>
             <CardTitle>Memory dump</CardTitle>
-            <CardDescription>Write freely — we'll classify and store it securely.</CardDescription>
+            <CardDescription>Write freely — we&rsquo;ll classify and store it securely.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">
             <Textarea
