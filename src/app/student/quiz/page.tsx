@@ -5,7 +5,7 @@ export default function StudentQuizPage() {
     <Card>
       <CardHeader>
         <CardTitle>Quiz</CardTitle>
-        <CardDescription>Today's recall and practice questions.</CardDescription>
+        <CardDescription>Today&rsquo;s recall and practice questions.</CardDescription>
       </CardHeader>
       <CardContent>
         <EmptyState
